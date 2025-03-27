@@ -118,9 +118,11 @@ students = df['Initials'].unique()
 time_slots = ["Morning (9-12)", "Early afternoon (12-4)", "Afternoon (4-7)", "After 7pm"]
 
 st.title("Student Availability Overlap")
+st.subheader("Find shared time slots for small group meetings.")
 selected_students = st.multiselect("Select up to 3 students:", 
                                    students, 
-                                   max_selections=3)
+                                   max_selections=3,
+                                   help="Hold Cmd/Ctrl to select multiple students.")
 
 if selected_students:
     availability_matrix = get_availability_matrix(df, selected_students, days, time_slots)
