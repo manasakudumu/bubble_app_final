@@ -22,14 +22,16 @@ def load_data():
     """
     df = pd.read_csv("cs248-availability.csv")
     df.rename(columns={df.columns[0]: "Initials"}, inplace=True)
-    
+
     days = [col.split("[")[1].replace("]", "") for col in df.columns[1:]]
     df.columns = ["Initials"] + days
     
+    students = sorted(df['Initials'].unique())
+
     time_slots = ["Morning (9-12)", "Early afternoon (12-4)", "Afternoon (4-7)", "After 7pm"]
     structured_data = []
     for _, row in df.iterrows():
-        student = row["Initials"]
+        student = students[_]
         availability = {"Initials": student}
         for day in days:
             times = str(row.get(day, ""))
@@ -40,6 +42,7 @@ def load_data():
         structured_data.append(availability)
     
     return pd.DataFrame(structured_data)
+
 
 def get_availability_matrix(df, selected_students, days, time_slots):
     """
@@ -56,7 +59,8 @@ def get_availability_matrix(df, selected_students, days, time_slots):
     """
     selected_df = df[df['Initials'].isin(selected_students)]
     matrix = pd.DataFrame(0, index=days, columns=time_slots)
-    
+    days = [day.capitalize() for day in days]
+
     for _, row in selected_df.iterrows():
         for day in days:
             times = row.get(day, [])
