@@ -131,6 +131,12 @@ if selected_students:
     common_times = find_common_times(availability_matrix, len(selected_students), days)
     if not common_times.empty:
         st.write(common_times)
+        st.download_button(
+            label = "Download Overlap as CSV",
+            data=common_times.to_csv(index=True),
+            file_name='overlap_summary.csv',
+            mime='text/csv',
+        )
     else:
         st.write("No common available times.")
 
