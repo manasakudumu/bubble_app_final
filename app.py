@@ -80,7 +80,7 @@ def plot_heatmap(matrix, days):
     fig, ax = plt.subplots(figsize=(8, 5))
     sns.heatmap(
         matrix.T.loc[::-1],
-        cmap="Greens",
+        cmap="coolwarm",
         annot=True,
         fmt="d",
         linewidths=0.5,
