@@ -9,3 +9,4 @@ Before meeting, we each brainstormed feature ideas for our app. Philly had creat
 Manasa also sketched the database tables.
 
 Week 3:
+The three of us met to figure out how to submit 
