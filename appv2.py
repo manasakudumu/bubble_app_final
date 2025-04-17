@@ -4,10 +4,34 @@ from auth import google_login
 from user_profile import render_user_profile
 import requests
 from datetime import datetime
+from db.bubbledb import (
+    create_tables, create_journal_table,
+    add_user, get_user,
+    add_journal_entry, get_journal_entries, delete_user
+)
+
+create_tables()
+create_journal_table()
+# delete_user("mk122@wellesley.edu")
+
 
 DEBUG = False # keep False when testing Google Login
-#DEBUG = True # set to True, when you don't want to go through authentication
+# DEBUG = True # set to True, when you don't want to go through authentication
+def fake_login():
+    """A simple function to handle the fake login process.
+    """
+    st.sidebar.header("Login")
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
+    
+    if st.sidebar.button("Login"):
+        if username:
+            st.session_state['user'] = username
+            st.sidebar.success(f"Logged in as {username}")
+        else:
+            st.sidebar.error("Please enter a valid username.")
 
+        
 # data for locations and meals
 data = [
     {'location': 'Bae', 'meal': 'Breakfast', 'locationID': 96, 'mealID': 148},
@@ -59,43 +83,6 @@ def get_menu(date, locationId, mealId):
     else:
         return {"error": "Failed to fetch menu"}
 
-# banner
-# st.image("images/banner.jpg", use_container_width=True)
-
-# streamlit app
-st.title("Wellesley Dining Menu Viewer")
-
-#date input
-selected_date = st.date_input("Select a date", value=datetime.today())
-formatted_date = selected_date.strftime('%Y-%m-%d')
-
-# location selection
-locations = df['location'].unique()
-selected_location = st.selectbox("Select a location", locations)
-
-# meal selection
-meals = df[df['location'] == selected_location]['meal'].unique()
-selected_meal = st.selectbox("Select a meal", meals)
-
-# get and display menu
-if st.button("Get Menu"):
-    # get locationID and mealID for the selected options
-    selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
-    locationID = selected_row['locationID']
-    mealID = selected_row['mealID']
-
-    # fetch menu
-    menu = get_menu(formatted_date, locationID, mealID)
-
-    # displaying menu
-    if "error" in menu:
-        st.error(menu["error"])
-    else:
-        st.success(f"Menu for {selected_location} - {selected_meal} on {formatted_date}:")
-        menu_df = pd.DataFrame(menu)
-        st.dataframe(menu_df)
-
-
 
 #----
 def render_sidebar():
@@ -124,3 +111,60 @@ def render_sidebar():
 render_sidebar()
 if "access_token" not in st.session_state:
     st.stop()
+user_email = st.session_state["user_email"]
+user_name = st.session_state["user_name"]
+existing_user = get_user(user_email)
+
+if not existing_user:
+    st.markdown("###Welcome!")
+    st.info("Please select your role to continue.")
+    role_selection = st.radio("Are you a student or staff?", ["Student", "Staff"])
+    
+    if st.button("Save Role"):
+        add_user(user_email, user_name, role_selection)
+        st.rerun()  #reruns page after role selection
+else:
+    role = existing_user[2]  
+    if role == "Student":
+        #Journal view
+        st.title("🍽️ Bubble: Food Journal")
+        st.write("Session:", st.session_state)
+        if "user_email" in st.session_state:
+            user_email = st.session_state["user_email"]
+
+            # select date location meal
+            selected_date = st.date_input("Select date", value=datetime.today())
+            formatted_date = selected_date.strftime('%Y-%m-%d')
+
+            selected_location = st.selectbox("Choose dining location", df['location'].unique())
+            meals = df[df['location'] == selected_location]['meal'].unique()
+            selected_meal = st.selectbox("Choose meal", meals)
+
+            # get meal options
+            selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
+            locationID = selected_row['locationID']
+            mealID = selected_row['mealID']
+            menu_items = get_menu(formatted_date, locationID, mealID)
+
+            food_names = [item['Name'] for item in menu_items]
+            selected_food = st.selectbox("What did you eat?", food_names)
+            mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
+            rating = st.slider("Rate the food (1 = worst, 5 = best)", 1, 5, 3)
+            comments = st.text_area("Any reviews? (optional)", placeholder="Taste, digestion, allergies...")
+            
+            if st.button("Save Entry"):
+                add_journal_entry(user_email,formatted_date,selected_location,selected_meal,selected_food,mood,rating,comments)
+                st.success("Entry saved!")
+            
+            #journal history
+            st.markdown("###Your past journal entries")
+            past = get_journal_entries(user_email)
+            if past:
+                df_past = pd.DataFrame(past, columns=["Date", "Location", "Meal", "Food", "Mood", "Rating", "Comments", "Created At"])
+                st.dataframe(df_past)
+            else:
+                st.info("No entries yet.")
+
+    else:
+        st.title("Staff Access")
+        st.markdown("Staff dashboard is coming soon!")

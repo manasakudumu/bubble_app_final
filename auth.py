@@ -35,6 +35,13 @@ def google_login():
             # st.write("🔎 Full query params:", st.query_params)
             token = oauth.fetch_token(TOKEN_ENDPOINT, code=code)
             st.session_state["access_token"] = token["access_token"]
+
+            user_info_response = oauth.get("https://www.googleapis.com/oauth2/v3/userinfo")
+            user_info = user_info_response.json()
+
+            st.session_state["user_email"] = user_info["email"]
+            st.session_state["user_name"] = user_info["name"]
+
             st.query_params.clear()
             return True
         except Exception as e:
