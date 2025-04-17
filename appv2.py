@@ -1,23 +1,12 @@
 import streamlit as st
 import pandas as pd
-
-
+from auth import google_login
+from user_profile import render_user_profile
 import requests
 from datetime import datetime
 
-def fake_login():
-    """A simple function to handle the fake login process.
-    """
-    st.sidebar.header("Login")
-    username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password")
-    
-    if st.sidebar.button("Login"):
-        if username:
-            st.session_state['user'] = username
-            st.sidebar.success(f"Logged in as {username}")
-        else:
-            st.sidebar.error("Please enter a valid username.")
+DEBUG = False # keep False when testing Google Login
+#DEBUG = True # set to True, when you don't want to go through authentication
 
 # data for locations and meals
 data = [
@@ -107,6 +96,31 @@ if st.button("Get Menu"):
         st.dataframe(menu_df)
 
 
-# If the user is not logged in, show the fake login screen
-if 'user' not in st.session_state:
-    fake_login()
+
+#----
+def render_sidebar():
+    """A function to handle the login in the sidebar."""
+    st.sidebar.header("Login")
+
+    if DEBUG and "access_token" not in st.session_state:
+        fake_login()
+
+    # If already logged in
+    if "access_token" in st.session_state:
+        render_user_profile()
+
+        if st.sidebar.button("Logout"):
+            for key in ["access_token", "oauth_state"]:
+                st.session_state.pop(key, None)
+            st.rerun()
+
+    else:
+        st.sidebar.warning("Not logged in.")
+        st.sidebar.write("Please log in with your Google account:")
+        logged_in = google_login()
+        if logged_in:
+            st.rerun()
+
+render_sidebar()
+if "access_token" not in st.session_state:
+    st.stop()
