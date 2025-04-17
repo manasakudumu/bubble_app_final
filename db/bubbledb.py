@@ -87,11 +87,88 @@ def get_journal_entries(email):
     conn.close()
     return rows
 
-
+#for debugging and tetsing- can be ignored
 def delete_user(email):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('DELETE FROM users WHERE email = ?', (email,))
     conn.commit()
     conn.close()
+
+
+def drop_community_posts_table():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DROP TABLE IF EXISTS community_posts")
+    conn.commit()
+    conn.close()
+
+def create_posts_table():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS community_posts (
+            id TEXT PRIMARY KEY,
+            user_email TEXT,
+            image_path TEXT,
+            caption TEXT,
+            rating INTEGER,
+            created_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def add_community_post(post_id, user_email, image_path, caption, rating, created_at):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO community_posts (id, user_email, image_path, caption, rating, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (post_id, user_email, image_path, caption, rating, created_at))
+    conn.commit()
+    conn.close()
+
+def get_all_community_posts():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, user_email, image_path, caption, rating, created_at
+        FROM community_posts
+        ORDER BY created_at DESC
+    """)
+    return cursor.fetchall()
+
+def create_feedback_table():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message TEXT,
+            submitted_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def submit_feedback(message, submitted_at):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO feedback (message, submitted_at)
+        VALUES (?, ?)
+    """, (message, submitted_at))
+    conn.commit()
+    conn.close()
+
+def get_all_feedback():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT message, submitted_at
+        FROM feedback
+        ORDER BY submitted_at DESC
+    """)
+    return cursor.fetchall()
 
