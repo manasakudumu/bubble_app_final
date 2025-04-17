@@ -227,21 +227,50 @@ else:
                             st.markdown(f"*Posted by {email.split('@')[0]} — {created_at[:10]}*")
                 
         #Resources
-        # with tabs[2]:
-            
+        with tabs[2]:
+            st.subheader("Resources & Links")
+            st.markdown("[Visit Wellesley Dining](https://www.wellesley.edu/life-at-wellesley/campus-dining)")
+            st.markdown("**Allergens:** [Navigating the Culinary Centers with Dietary Restrictions](http://www.wellesleyfresh.com/allergens-preferences.html)")
+            st.markdown("[Nutrition info series](http://www.wellesleyfresh.com/documents/Nutrition-Info-Series-January-2025-Edition-1.pdf)")
+
+            st.markdown("### Key contacts")
+            st.markdown("**General dining feedback:** dining@wellesley.edu")
+            st.markdown("**Dining manager (Tower, Bates, Stone):** 781-283-XXXXX")
+            st.markdown("**Wellesley fresh office:** 781-283-XXX")
+            st.markdown("**Campus nutritionist:** nutritionist@wellesley.edu")
+
+            st.markdown("### Emergencies or health issues")
+            st.markdown("If you are experiencing a medical emergency related to food, call campus police at **(781) 283-2121**.")
+            st.markdown("For non-urgent health concerns, contact Wellesley Health Services, HealthMD@wellesley.edu or call **781-283-2810**.")
+
+
         
         #Feedback
-        # with tabs[3]:
-            
-            
+        with tabs[3]:
+            st.title("Anonymous feedback to dining hall staff")
+            st.markdown("Your feedback will be anonymous.")
+            feedback_msg = st.text_area("Enter feedback", height=150)
+            if st.button("Send Feedback"):
+                if feedback_msg.strip():
+                    submit_feedback(feedback_msg.strip(), str(datetime.now()))
+                    st.success("Your feedback was sent anonymously!")
+                else:
+                    st.warning("Please enter a message before submitting.")
+
         #profile
         # with tabs[4]:
-
 
 
     else:
         st.title("Dining hall staff access")
         st.markdown("### Anonymous feedback inbox from students")
 
-        # add code to receive feedback form from students (anonymous)
+        feedback_list = get_all_feedback()
+        if not feedback_list:
+            st.info("No feedback received yet.")
+        else:
+            for msg, submitted in feedback_list:
+                st.markdown(" " + msg)
+                st.caption(f"Submitted on {submitted[:16]}")
+                st.markdown("---")
        
