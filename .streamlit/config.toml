@@ -1,0 +1,13 @@
+# .streamlit/config.toml
+
+[theme]
+primaryColor="#6F36FF"
+backgroundColor="#FFFFFF"
+secondaryBackgroundColor="#F4F4F4"
+textColor="#000000"
+
+[server]
+headless = true
+
+[client]
+showSidebarNavigation = true

@@ -7,3 +7,5 @@ Week 2:
 Philly, Manasa, and Dechen found a common time to meet and wrote the team contract together.
 Before meeting, we each brainstormed feature ideas for our app. Philly had created a presentation of feature ideas DPM had previously discussed in class in alignment to VSD and Data Feminism principles, so when we met up, we revised the presentation together and split the task of creating the mockup pages of our app and its features. 
 Manasa also sketched the database tables.
+
+Week 3:
