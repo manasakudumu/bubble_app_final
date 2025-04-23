@@ -16,39 +16,14 @@ def get_user_info(access_token):
         st.warning(f"User info fetch failed: {e}")
     return None
 
-# Commented for the moment, so that I can use the version with Fake User
-# def render_user_profile():
-#     """Render user profile photo and a greeting, if user opts in."""
-#     access_token = st.session_state.get("access_token")
-#     if not access_token:
-#         return
 
-#     show_profile = st.sidebar.checkbox("Show profile info", value=True)
-
-#     if show_profile:
-#         user = get_user_info(access_token)
-#         if user:
-#             first_name = user.get("given_name") or user.get("name", "there").split()[0]
-#             col1, col2 = st.sidebar.columns([1, 4])
-#             with col1:
-#                 st.image(user.get("picture"), width=40)
-#             with col2:
-#                 st.markdown(f"**Hello, {first_name}!**")
-#         else:
-#             st.sidebar.success("Logged in ✅")
-#     else:
-#         st.sidebar.success("Logged in ✅")
-
-
-
-# VERSION that I'm using for DEBUGGING
 def render_user_profile():
     """Render user profile photo and greeting, if user opts in."""
     access_token = st.session_state.get("access_token")
     if not access_token:
         return
 
-    show_profile = st.sidebar.checkbox("Show profile info", value=True)
+    show_profile = st.sidebar.checkbox("Show profile info", value=True, key="user_profile_checkbox")
 
     if show_profile:
         if "fake_user_name" in st.session_state:
