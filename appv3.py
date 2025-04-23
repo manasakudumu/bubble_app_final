@@ -37,8 +37,9 @@ if not existing_user:
     role_selection = st.radio("Are you a student or staff?", ["Student", "Staff"])
     if st.button("Save Role"):
         add_user(user_email, user_name, role_selection)
-        st.success("Role saved! Redirecting...")
+        st.success("Role saved! Redirecting...") 
         if role_selection == "Student":
             st.switch_page("pages/2_foodJournal.py") 
         else:
             st.switch_page("pages/6_staffView.py")
+
