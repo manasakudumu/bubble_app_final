@@ -246,14 +246,46 @@ else:
 
         
         #Feedback
+        # to be added:
+        # date, meal type, dining hall, specific meal eaten
         with tabs[3]:
             st.title("Anonymous feedback to dining hall staff")
             st.markdown("Your feedback will be anonymous.")
+
+            # select date
+            feedback_date = st.date_input("Select the date of your meal", value=datetime.today())
+            formatted_feedback_date = feedback_date.strftime('%Y-%m-%d')
+
+            # select dining hall and meal type
+            # selected_location = st.selectbox("Choose dining location", df['location'].unique())
+            # meals = df[df['location'] == selected_location]['meal'].unique()
+            # selected_meal = st.selectbox("Choose meal", meals)
+
+            feedback_location = st.selectbox("Dining Hall", df['location'].unique())
+            feedback_meals = df[df['location'] == feedback_location]['meal'].unique()
+            feedback_meal = st.selectbox("Meal type", feedback_meals)
+
+            # get meal options
+            selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
+            locationID = selected_row['locationID']
+            mealID = selected_row['mealID']
+            menu_items = get_menu(formatted_date, locationID, mealID)
+            selected_feedback_food = st.selectbox("Specific meal you had", food_names)
+
+
             feedback_msg = st.text_area("Enter feedback", height=150)
             if st.button("Send Feedback"):
                 if feedback_msg.strip():
-                    submit_feedback(feedback_msg.strip(), str(datetime.now()))
-                    st.success("Your feedback was sent anonymously!")
+                    # formatting feedback
+                    full_feedback = (
+                        f"Date: {formatted_feedback_date}\n"
+                        f"Location: {feedback_location}\n"
+                        f"Meal: {feedback_meal}\n"
+                        f"Food: {selected_feedback_food}\n"
+                        f"Feedback: {feedback_msg.strip()}"
+                    )
+                    submit_feedback(full_feedback, str(datetime.now()))
+                    st.success("Your feedback was sent successfully (and anonymously)!")
                 else:
                     st.warning("Please enter a message before submitting.")
 
