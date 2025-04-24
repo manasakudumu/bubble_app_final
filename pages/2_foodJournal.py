@@ -145,20 +145,48 @@ st.markdown("### Your past journal entries")
 past = get_journal_entries(user_email)
 if past:
     df_past = pd.DataFrame(past, columns=["Date", "Location", "Meal", "Food", "Mood", "Rating", "Comments", "Created At"])
-    for _, row in df_past.iterrows():
-        st.markdown(
-            f"""
-            <div class="journal-card">
-                <h3>{row['Date']} — {row['Meal']} @ {row['Location']}</h3>
-                <p><strong>What you ate:</strong> {row['Food']}</p>
-                <p><strong>Mood:</strong> {row['Mood']}</p>
-                <p><strong>Rating:</strong> {row['Rating']}</p>
-                <p><strong>Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._'}</p>
-                <small>⏱️ Logged at: {row['Created At']}</small>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    df_past["Date"] = pd.to_datetime(df_past["Date"])
+
+    # filters
+    st.markdown("### Filter your journal history")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        selected_filter_location = st.selectbox("Dining Hall", ["All"] + sorted(df_past["Location"].unique()))
+    with col2:
+        selected_filter_meal = st.selectbox("Meal", ["All"] + sorted(df_past["Meal"].unique()))
+    with col3:
+        date_range = st.date_input("Date Range", [df_past["Date"].min(), df_past["Date"].max()])
+    filtered_df = df_past.copy()
+
+    if selected_filter_location != "All":
+        filtered_df = filtered_df[filtered_df["Location"] == selected_filter_location]
+    if selected_filter_meal != "All":
+        filtered_df = filtered_df[filtered_df["Meal"] == selected_filter_meal]
+    if isinstance(date_range, list) and len(date_range) == 2:
+        start_date, end_date = date_range
+        filtered_df = filtered_df[
+            (filtered_df["Date"] >= pd.to_datetime(start_date)) &
+            (filtered_df["Date"] <= pd.to_datetime(end_date))
+        ]
+
+    # show filtered results
+    if filtered_df.empty:
+        st.info("No journal entries match your filters.")
+    else:
+        for _, row in filtered_df.iterrows():
+            st.markdown(
+                f"""
+                <div class="journal-card">
+                    <h3>{row['Date'].strftime('%Y-%m-%d')} — {row['Meal']} @ {row['Location']}</h3>
+                    <p><strong>What you ate:</strong> {row['Food']}</p>
+                    <p><strong>Mood:</strong> {row['Mood']}</p>
+                    <p><strong>Rating:</strong> {row['Rating']}</p>
+                    <p><strong>Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._'}</p>
+                    <small>⏱️ Logged at: {row['Created At']}</small>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
 else:
     st.info("No entries yet.")
