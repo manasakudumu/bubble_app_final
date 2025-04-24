@@ -56,6 +56,9 @@ def get_menu(date, locationId, mealId):
         return {"error": "Failed to fetch menu"}
     
 st.title("🫧 Bubble: Food Journal")
+if "access_token" not in st.session_state:
+    st.warning("Please log in before accessing this page.")
+    st.stop()
 
 user_email = st.session_state.get("user_email")
 user = get_user(user_email)
@@ -115,4 +118,4 @@ if past:
                     )
                     st.plotly_chart(fig, use_container_width=True)
 else:
-                    st.info("No entries yet.")
+    st.info("No entries yet.")

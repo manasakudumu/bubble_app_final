@@ -4,6 +4,10 @@ from datetime import datetime
 from db.bubbledb import add_community_post, get_all_community_posts, get_user
 
 st.title("📸 Community Feed")
+if "access_token" not in st.session_state:
+    st.warning("Please log in before accessing this page.")
+    st.stop()
+    
 user_email = st.session_state.get("user_email")
 user = get_user(user_email)
 role = user[2]

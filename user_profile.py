@@ -23,7 +23,7 @@ def render_user_profile():
     if not access_token:
         return
 
-    show_profile = st.sidebar.checkbox("Show profile info", value=True, key="user_profile_checkbox")
+    show_profile = st.sidebar.checkbox("Show profile info", value=True)
 
     if show_profile:
         if "fake_user_name" in st.session_state:
