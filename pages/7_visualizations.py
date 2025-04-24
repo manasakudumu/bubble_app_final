@@ -20,7 +20,7 @@ user_email = st.session_state.get("user_email")
 user = get_user(user_email)
 role = user[2]
 
-if role != "Student":
+if role != "student":
     st.error("Access denied: This page is only for students.")
     st.stop()
 past = get_journal_entries(user_email)

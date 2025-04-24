@@ -55,7 +55,7 @@ if "access_token" not in st.session_state:
 
 user_email = st.session_state["user_email"]
 user = get_user(user_email)
-if user[2] != "Student":
+if user[2] != "student":
     st.error("Access denied: This page is only for students.")
     st.stop()
 
