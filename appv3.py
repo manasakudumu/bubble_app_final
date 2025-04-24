@@ -24,8 +24,8 @@ st.set_page_config(page_title="Bubble", page_icon="🫧", layout="wide")
 
 
 
-DEBUG = False # keep False when testing Google Login
-# DEBUG = True # set to True, when you don't want to go through authentication
+# DEBUG = False # keep False when testing Google Login
+DEBUG = True # set to True, when you don't want to go through authentication
 def fake_login():
     """A simple function to handle the fake login process.
     """
