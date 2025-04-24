@@ -173,27 +173,30 @@ else:
                 food_names = [item['Name'] for item in menu_items]
         
                 st.markdown("### What did you eat? (Click to select, click again to unselect)")
+
                 if "selected_foods" not in st.session_state:
                     st.session_state.selected_foods = set()
 
-                cols = st.columns(3)  #number of columns
+                cols = st.columns(3)  # num buttons per row
+
                 for i, food in enumerate(food_names):
-                    if food in st.session_state.selected_foods:
-                        button_label = f"✅ {food}"
-                        color = "lightgreen"
-                    else:
-                        button_label = food
-                        color = "white"
+                    key = f"toggle_{food}"
 
-                    #clickable box per food
-                    if cols[i % 3].button(button_label, key=f"food_{i}"):
-                        if food in st.session_state.selected_foods:
-                            st.session_state.selected_foods.remove(food)
-                        else:
+                    # initialize food toggle state
+                    if key not in st.session_state:
+                        st.session_state[key] = False
+
+                    # using checkbox as a workaround for persistent state
+                    with cols[i % 3]:
+                        toggled = st.checkbox(f"{'✅' if st.session_state[key] else '⬜'} {food}", key=key)
+                        if toggled:
                             st.session_state.selected_foods.add(food)
+                        else:
+                            st.session_state.selected_foods.discard(food)
 
-                # showing what was selected
+                # diplay current selection
                 st.markdown(f"**Selected foods:** {', '.join(st.session_state.selected_foods) or 'None'}")
+
 
                 mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
                 rating = st.slider("Rate the food (1 = worst, 5 = best)", 1, 5, 3)
