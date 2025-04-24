@@ -149,13 +149,20 @@ else:
                 ###### possible could have the options set up as buttons so that they can press buttons instead of selecting from dropdowns
                 ###### automatiicaly show the dininghall that they frequent the most first
                 ###### 
-                # select date location meal
+                # select date location mealgit 
                 selected_date = st.date_input("Select date", value=datetime.today())
                 formatted_date = selected_date.strftime('%Y-%m-%d')
 
-                selected_location = st.selectbox("Choose dining location", df['location'].unique())
+                # selected_location = st.selectbox("Choose dining location", df['location'].unique())
+                # meals = df[df['location'] == selected_location]['meal'].unique()
+                # selected_meal = st.selectbox("Choose meal", meals)
+
+                locations = df['location'].unique()
+                selected_location = st.radio("Choose dining location", locations, horizontal=True)
+
                 meals = df[df['location'] == selected_location]['meal'].unique()
-                selected_meal = st.selectbox("Choose meal", meals)
+                selected_meal = st.radio("Choose meal", meals, horizontal=True)
+
 
                 # get meal options
                 selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
