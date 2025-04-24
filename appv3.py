@@ -146,6 +146,9 @@ else:
             if "user_email" in st.session_state:
                 user_email = st.session_state["user_email"]
 
+                ###### possible could have the options set up as buttons so that they can press buttons instead of selecting from dropdowns
+                ###### automatiicaly show the dininghall that they frequent the most first
+                ###### 
                 # select date location meal
                 selected_date = st.date_input("Select date", value=datetime.today())
                 formatted_date = selected_date.strftime('%Y-%m-%d')
@@ -184,6 +187,7 @@ else:
                     df_past["Mood Score"] = df_past["Mood"].map(moods)
 
                     # plotly
+                    #### maybe could use a heatmap visualization instead of line plot
                     fig = px.line(df_past, x="Date", y="Mood Score", markers=True,
                                 title="Your mood trend based on food",
                                 labels={"Mood score": "Mood Rating (1-5)"})
