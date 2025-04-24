@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import plotly.express as px
 import requests
+from datetime import datetime
+import pytz
 from db.bubbledb import get_journal_entries, add_journal_entry, get_user
 
 data = [
@@ -19,103 +20,121 @@ data = [
     {'location': 'Tower', 'meal': 'Lunch', 'locationID': 97, 'mealID': 154},
     {'location': 'Tower', 'meal': 'Dinner', 'locationID': 97, 'mealID': 310},
 ]
-
-# converting data to DataFrame
 df = pd.DataFrame(data)
-
-# base URL for API, defining locally?
 base_url = 'https://dish.avifoodsystems.com/api/menu-items/week'
 
-# function to get menu from API
 def get_menu(date, locationId, mealId):
-    params = {
-        'date': date,
-        'locationId': locationId,
-        'mealId': mealId
-    }
+    params = {'date': date, 'locationId': locationId, 'mealId': mealId}
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
-        menu_items = response.json()
-        filtered_items = []
-        for item in menu_items:
-            item_date = item.get('date', '').split('T')[0] 
-            if item_date == date:
-                food = {
-                    'Name': item.get('name', 'N/A'),
-                    'Description': item.get('description', 'N/A'),
-                    'Station': item.get('stationName', 'N/A'),
-                    'Category': item.get('categoryName', 'N/A'),
-                    'Calories': item.get('nutritionals', {}).get('calories', 'N/A'),
-                    'Allergens': ", ".join([a['name'] for a in item.get('allergens', [])]),
-                    'Preferences': ", ".join([p['name'] for p in item.get('preferences', [])])
-                }
-                filtered_items.append(food)
+        items = response.json()
+        return [item.get('name', 'N/A') for item in items if item.get('date', '').startswith(date)]
+    return ["Menu unavailable"]
 
-        return filtered_items
-    else:
-        return {"error": "Failed to fetch menu"}
-    
-st.title("🫧 Bubble: Food Journal")
+st.set_page_config(page_title="🫧 Food Journal", page_icon="🫧", layout="wide")
 if "access_token" not in st.session_state:
-    st.warning("Please log in before accessing this page.")
-    st.stop()
-
-user_email = st.session_state.get("user_email")
-user = get_user(user_email)
-role = user[2]
-
-if role != "Student":
-    st.error("Access denied: This page is only for students.")
+    st.warning("Please log in to access this page.")
     st.stop()
 
 user_email = st.session_state["user_email"]
+user = get_user(user_email)
+if user[2] != "Student":
+    st.error("Access denied: This page is only for students.")
+    st.stop()
 
-                # select date location meal
-selected_date = st.date_input("Select date", value=datetime.today())
-formatted_date = selected_date.strftime('%Y-%m-%d')
+#time zone
+eastern = pytz.timezone('US/Eastern')
+today = datetime.now(eastern)
 
-selected_location = st.selectbox("Choose dining location", df['location'].unique())
-meals = df[df['location'] == selected_location]['meal'].unique()
-selected_meal = st.selectbox("Choose meal", meals)
+# date api
+today_display = today.strftime("%A, %B %d, %Y")  
+today_api = today.strftime("%Y-%m-%d")
 
-                # get meal options
-selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
-locationID = selected_row['locationID']
-mealID = selected_row['mealID']
-menu_items = get_menu(formatted_date, locationID, mealID)
+st.markdown(f"## 📝 Daily Food Planner — *{today_display}*")
+st.markdown("Your cozy, colorful space to log everything from meals to mood 💗")
+st.divider()
 
-food_names = [item['Name'] for item in menu_items]
-selected_food = st.selectbox("What did you eat?", food_names)
-mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
-rating = st.slider("Rate the food (1 = worst, 5 = best)", 1, 5, 3)
-comments = st.text_area("Any reviews? (optional)", placeholder="Thoughts, questions, opinions...?")
-                
-if st.button("Save Entry"):
-                    add_journal_entry(user_email,formatted_date,selected_location,selected_meal,selected_food,mood,rating,comments)
-                    st.success("Entry saved!")
-                
-                #journal history
-st.markdown("### Your past journal entries")
-past = get_journal_entries(user_email)
-if past:
-                    df_past = pd.DataFrame(past, columns=["Date", "Location", "Meal", "Food", "Mood", "Rating", "Comments", "Created At"])
-                    st.dataframe(df_past)
-                    # journal mood viz
-                    moods = {"😍 Loved it": 5,"😊 Happy": 4,"😐 Neutral": 3,"😕 Meh": 2,"😞 Unhappy": 1}
-                    st.markdown("### Mood Trend Over Time")
-                    df_past["Date"] = pd.to_datetime(df_past["Date"])
-                    df_past = df_past.sort_values("Date")
-                    df_past["Mood Score"] = df_past["Mood"].map(moods)
+# dining hsll selection
+with st.sidebar:
+    st.markdown("🍽️ **Dining Hall**")
+    selected_location = st.radio("Choose location:", df['location'].unique())
+    formatted_date = datetime.today().strftime('%Y-%m-%d')
+location_data = df[df['location'] == selected_location]
 
-                    # plotly
-                    fig = px.line(df_past, x="Date", y="Mood Score", markers=True,
-                                title="Your mood trend based on food",
-                                labels={"Mood score": "Mood Rating (1-5)"})
-                    fig.update_layout(
-                        yaxis=dict(tickmode="array",tickvals=[1, 2, 3, 4, 5],
-                            ticktext=["😞 Unhappy", "😕 Meh", "😐 Neutral", "😊 Happy", "😍 Loved it"]
-                        )
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("No entries yet.")
+col_b, col_l, col_d = st.columns(3)
+def meal_options(meal_name):
+    meal_row = location_data[location_data['meal'] == meal_name].iloc[0]
+    items = get_menu(today_api, meal_row['locationID'], meal_row['mealID'])
+    return items
+# breakfast
+with col_b:
+    st.markdown("### Breakfast", unsafe_allow_html=True)
+    breakfast_items = meal_options("Breakfast")
+    breakfast_selection = []
+    for i, item in enumerate(breakfast_items):
+        if st.checkbox(f" {item}", key=f"bf_{i}_{item}"):
+            breakfast_selection.append(item)
+
+
+# lunch
+with col_l:
+    st.markdown("### Lunch", unsafe_allow_html=True)
+    lunch_items = meal_options("Lunch")
+    lunch_selection = []
+    for i, item in enumerate(lunch_items):
+        if st.checkbox(f" {item}", key=f"l_{i}_{item}"):
+            lunch_selection.append(item)
+
+
+# dinner
+with col_d:
+    st.markdown("### Dinner", unsafe_allow_html=True)
+    dinner_items = meal_options("Dinner")
+    dinner_selection = []
+    for i, item in enumerate(dinner_items):
+        if st.checkbox(f" {item}", key=f"d_{i}_{item}"):
+            dinner_selection.append(item)
+
+
+st.markdown("### Mood Today")
+mood = st.multiselect("Check all that apply", ["Happiness", "Sadness", "Anger", "Fear", "Disgust", "Surprise"])
+
+st.markdown("### 📝 Notes")
+notes = st.text_area("Add thoughts, cravings, or anything else...")
+
+# # ========== SAVE ENTRIES ========== #
+# if st.button("💾 Save My Day"):
+#     for meal, food in zip(["Breakfast", "Lunch", "Dinner"], [breakfast, lunch, dinner]):
+#         add_journal_entry(user_email, formatted_date, location, meal, food,
+#                           ", ".join(mood), 0,
+#                           f"Water: {water} glasses | Sleep: {sleep}h | Exercise: {exercise} | Notes: {notes}")
+#     st.success("Your daily planner entry has been saved! 🌈")
+
+# # ========== JOURNAL HISTORY ========== #
+# st.markdown("## 📖 Your Food Mood Feed")
+# st.markdown("_A cozy log of your eats, feelings, and thoughts..._")
+# st.markdown("---")
+
+# for _, row in df_past.iterrows():
+#     with st.container():
+#         st.markdown(
+#             f"""
+#             <div style='
+#                 background-color: #2a2b38;
+#                 border-radius: 12px;
+#                 padding: 1.2rem;
+#                 margin-bottom: 1.2rem;
+#                 border: 1px solid #444;
+#             '>
+#                 <h3 style='color: #ffb6c1;'>📅 {row['Date']} — {row['Meal']} @ {row['Location']}</h3>
+#                 <p style='font-size: 1rem;'>
+#                     <strong>🍽️ What you ate:</strong> {row['Food']}<br>
+#                     <strong>🎭 Mood:</strong> {row['Mood']}<br>
+#                     <strong>📝 Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._' }<br>
+#                     <small>⏱️ Logged at: {row['Created At'][:16]}</small>
+#                 </p>
+#             </div>
+#             """,
+#             unsafe_allow_html=True
+#         )
+
