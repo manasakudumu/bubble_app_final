@@ -6,7 +6,6 @@ from datetime import datetime
 import pytz
 from db.bubbledb import get_journal_entries, add_journal_entry, get_user
 
-# 1. Dining hall & meal mapping
 data = [
     {'location': 'Bae', 'meal': 'Breakfast', 'locationID': 96, 'mealID': 148},
     {'location': 'Bae', 'meal': 'Lunch', 'locationID': 96, 'mealID': 149},
@@ -32,7 +31,6 @@ def get_menu(date, locationId, mealId):
         return [item.get('name', 'N/A') for item in items if item.get('date', '').startswith(date)]
     return ["Menu unavailable"]
 
-# 2. Access control
 st.set_page_config(page_title="🫧 Food Journal", page_icon="🫧", layout="wide")
 if "access_token" not in st.session_state:
     st.warning("Please log in to access this page.")
@@ -48,34 +46,27 @@ if user[2] != "Student":
 eastern = pytz.timezone('US/Eastern')
 today = datetime.now(eastern)
 
-# Format nicely for display and API
-today_display = today.strftime("%A, %B %d, %Y")  # e.g. "Wednesday, April 23, 2025"
-today_api = today.strftime("%Y-%m-%d")  # e.g. "2025-04-23"
+# date api
+today_display = today.strftime("%A, %B %d, %Y")  
+today_api = today.strftime("%Y-%m-%d")
 
 st.markdown(f"## 📝 Daily Food Planner — *{today_display}*")
 st.markdown("Your cozy, colorful space to log everything from meals to mood 💗")
 st.divider()
 
-# Dining hall selection
+# dining hsll selection
 with st.sidebar:
     st.markdown("🍽️ **Dining Hall**")
     selected_location = st.radio("Choose location:", df['location'].unique())
     formatted_date = datetime.today().strftime('%Y-%m-%d')
-
-# Filter by selected location
 location_data = df[df['location'] == selected_location]
 
-# Layout: 3 columns = breakfast | lunch | dinner
 col_b, col_l, col_d = st.columns(3)
-
-
-
-# Helper to get menu for each meal
 def meal_options(meal_name):
     meal_row = location_data[location_data['meal'] == meal_name].iloc[0]
     items = get_menu(today_api, meal_row['locationID'], meal_row['mealID'])
     return items
-# Breakfast
+# breakfast
 with col_b:
     st.markdown("### Breakfast", unsafe_allow_html=True)
     breakfast_items = meal_options("Breakfast")
@@ -85,7 +76,7 @@ with col_b:
             breakfast_selection.append(item)
 
 
-# Lunch
+# lunch
 with col_l:
     st.markdown("### Lunch", unsafe_allow_html=True)
     lunch_items = meal_options("Lunch")
@@ -95,7 +86,7 @@ with col_l:
             lunch_selection.append(item)
 
 
-# Dinner
+# dinner
 with col_d:
     st.markdown("### Dinner", unsafe_allow_html=True)
     dinner_items = meal_options("Dinner")
@@ -105,56 +96,45 @@ with col_d:
             dinner_selection.append(item)
 
 
-
-# ========== OTHER SECTIONS ========== #
-st.markdown("### 🥤 Water Intake")
-water = st.slider("💧 Glasses of water today", 0, 8, 4)
-
-st.markdown("### 😴 Sleep Hours")
-sleep = st.slider("How many hours of sleep?", 0, 12, 7)
-
-st.markdown("### 🎭 Mood Today")
+st.markdown("### Mood Today")
 mood = st.multiselect("Check all that apply", ["Happiness", "Sadness", "Anger", "Fear", "Disgust", "Surprise"])
-
-st.markdown("### 🧘 Exercise")
-exercise = st.text_input("What physical activity did you do today?")
 
 st.markdown("### 📝 Notes")
 notes = st.text_area("Add thoughts, cravings, or anything else...")
 
-# ========== SAVE ENTRIES ========== #
-if st.button("💾 Save My Day"):
-    for meal, food in zip(["Breakfast", "Lunch", "Dinner"], [breakfast, lunch, dinner]):
-        add_journal_entry(user_email, formatted_date, location, meal, food,
-                          ", ".join(mood), 0,
-                          f"Water: {water} glasses | Sleep: {sleep}h | Exercise: {exercise} | Notes: {notes}")
-    st.success("Your daily planner entry has been saved! 🌈")
+# # ========== SAVE ENTRIES ========== #
+# if st.button("💾 Save My Day"):
+#     for meal, food in zip(["Breakfast", "Lunch", "Dinner"], [breakfast, lunch, dinner]):
+#         add_journal_entry(user_email, formatted_date, location, meal, food,
+#                           ", ".join(mood), 0,
+#                           f"Water: {water} glasses | Sleep: {sleep}h | Exercise: {exercise} | Notes: {notes}")
+#     st.success("Your daily planner entry has been saved! 🌈")
 
-# ========== JOURNAL HISTORY ========== #
-st.markdown("## 📖 Your Food Mood Feed")
-st.markdown("_A cozy log of your eats, feelings, and thoughts..._")
-st.markdown("---")
+# # ========== JOURNAL HISTORY ========== #
+# st.markdown("## 📖 Your Food Mood Feed")
+# st.markdown("_A cozy log of your eats, feelings, and thoughts..._")
+# st.markdown("---")
 
-for _, row in df_past.iterrows():
-    with st.container():
-        st.markdown(
-            f"""
-            <div style='
-                background-color: #2a2b38;
-                border-radius: 12px;
-                padding: 1.2rem;
-                margin-bottom: 1.2rem;
-                border: 1px solid #444;
-            '>
-                <h3 style='color: #ffb6c1;'>📅 {row['Date']} — {row['Meal']} @ {row['Location']}</h3>
-                <p style='font-size: 1rem;'>
-                    <strong>🍽️ What you ate:</strong> {row['Food']}<br>
-                    <strong>🎭 Mood:</strong> {row['Mood']}<br>
-                    <strong>📝 Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._' }<br>
-                    <small>⏱️ Logged at: {row['Created At'][:16]}</small>
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+# for _, row in df_past.iterrows():
+#     with st.container():
+#         st.markdown(
+#             f"""
+#             <div style='
+#                 background-color: #2a2b38;
+#                 border-radius: 12px;
+#                 padding: 1.2rem;
+#                 margin-bottom: 1.2rem;
+#                 border: 1px solid #444;
+#             '>
+#                 <h3 style='color: #ffb6c1;'>📅 {row['Date']} — {row['Meal']} @ {row['Location']}</h3>
+#                 <p style='font-size: 1rem;'>
+#                     <strong>🍽️ What you ate:</strong> {row['Food']}<br>
+#                     <strong>🎭 Mood:</strong> {row['Mood']}<br>
+#                     <strong>📝 Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._' }<br>
+#                     <small>⏱️ Logged at: {row['Created At'][:16]}</small>
+#                 </p>
+#             </div>
+#             """,
+#             unsafe_allow_html=True
+#         )
 
