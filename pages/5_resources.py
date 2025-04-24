@@ -1,6 +1,9 @@
 import streamlit as st
 from db.bubbledb import get_user
 
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
 st.title("Resources & Support")
 
 if "access_token" not in st.session_state:

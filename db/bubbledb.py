@@ -7,17 +7,7 @@ def get_connection():
 def create_tables():
     conn = get_connection()
     cursor = conn.cursor()
-    
-    # Create users table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        email TEXT PRIMARY KEY,
-        name TEXT,
-        role TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, name TEXT, role TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.commit()
     conn.close()
 
@@ -132,44 +122,27 @@ def add_community_post(post_id, user_email, image_path, caption, rating, created
 def get_all_community_posts():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, user_email, image_path, caption, rating, created_at
-        FROM community_posts
-        ORDER BY created_at DESC
-    """)
+    cursor.execute("""SELECT id, user_email, image_path, caption, rating, created_at FROM community_posts ORDER BY created_at DESC""")
     return cursor.fetchall()
 
 def create_feedback_table():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            message TEXT,
-            submitted_at TEXT
-        )
-    """)
+    cursor.execute("""CREATE TABLE IF NOT EXISTS feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, message TEXT,submitted_at TEXT)""")
     conn.commit()
     conn.close()
 
 def submit_feedback(message, submitted_at):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO feedback (message, submitted_at)
-        VALUES (?, ?)
-    """, (message, submitted_at))
+    cursor.execute("""INSERT INTO feedback (message, submitted_at)VALUES (?, ?)""", (message, submitted_at))
     conn.commit()
     conn.close()
 
 def get_all_feedback():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT message, submitted_at
-        FROM feedback
-        ORDER BY submitted_at DESC
-    """)
+    cursor.execute(""" SELECT message, submitted_at FROM feedback ORDER BY submitted_at DESC""")
     return cursor.fetchall()
 
 def delete_community_post(post_id):

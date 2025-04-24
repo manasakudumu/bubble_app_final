@@ -1,7 +1,7 @@
 [theme]
-base="dark"
-primaryColor="#ffb6c1"     # Light pink
-backgroundColor="#1e1e2f"
-secondaryBackgroundColor="#292b36"
-textColor="#ffffff"
-font="sans serif"
+base = "light"
+primaryColor = "#ffb6c1"         
+backgroundColor = "#fef8f8"      
+secondaryBackgroundColor = "#ffffff"
+textColor = "#222222"            
+font = "sans serif"

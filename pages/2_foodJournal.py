@@ -1,10 +1,13 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import plotly.express as px
 import requests
 from datetime import datetime
-import pytz
 from db.bubbledb import get_journal_entries, add_journal_entry, get_user
+
+with open("style.css") as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 data = [
     {'location': 'Bae', 'meal': 'Breakfast', 'locationID': 96, 'mealID': 148},
@@ -28,10 +31,24 @@ def get_menu(date, locationId, mealId):
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
         items = response.json()
-        return [item.get('name', 'N/A') for item in items if item.get('date', '').startswith(date)]
-    return ["Menu unavailable"]
+        filtered_items = []
+        for item in items:
+            if item.get('date', '').startswith(date):
+                food = {
+                    'Name': item.get('name', 'N/A'),
+                    'Description': item.get('description', 'N/A'),
+                    'Station': item.get('stationName', 'N/A'),
+                    'Category': item.get('categoryName', 'N/A'),
+                    'Calories': item.get('nutritionals', {}).get('calories', 'N/A'),
+                    'Allergens': ", ".join([a['name'] for a in item.get('allergens', [])]),
+                    'Preferences': ", ".join([p['name'] for p in item.get('preferences', [])])
+                }
+                filtered_items.append(food)
+        return filtered_items
+    return []
 
-st.set_page_config(page_title="🫧 Food Journal", page_icon="🫧", layout="wide")
+st.title("Bubble: Food Journal")
+
 if "access_token" not in st.session_state:
     st.warning("Please log in to access this page.")
     st.stop()
@@ -42,99 +59,106 @@ if user[2] != "Student":
     st.error("Access denied: This page is only for students.")
     st.stop()
 
-#time zone
-eastern = pytz.timezone('US/Eastern')
-today = datetime.now(eastern)
+# Select date, dining location, and meal
+selected_date = st.date_input("Select date", value=datetime.today())
+formatted_date = selected_date.strftime('%Y-%m-%d')
 
-# date api
-today_display = today.strftime("%A, %B %d, %Y")  
-today_api = today.strftime("%Y-%m-%d")
+selected_location = st.radio("Choose dining location", df['location'].unique(), horizontal=True)
+meals = df[df['location'] == selected_location]['meal'].unique()
+selected_meal = st.radio("Choose meal", meals, horizontal=True)
 
-st.markdown(f"## 📝 Daily Food Planner — *{today_display}*")
-st.markdown("Your cozy, colorful space to log everything from meals to mood 💗")
-st.divider()
+selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
+locationID = selected_row['locationID']
+mealID = selected_row['mealID']
+menu_items = get_menu(formatted_date, locationID, mealID)
 
-# dining hsll selection
-with st.sidebar:
-    st.markdown("🍽️ **Dining Hall**")
-    selected_location = st.radio("Choose location:", df['location'].unique())
-    formatted_date = datetime.today().strftime('%Y-%m-%d')
-location_data = df[df['location'] == selected_location]
+food_names = sorted(set(item['Name'] for item in menu_items))
 
-col_b, col_l, col_d = st.columns(3)
-def meal_options(meal_name):
-    meal_row = location_data[location_data['meal'] == meal_name].iloc[0]
-    items = get_menu(today_api, meal_row['locationID'], meal_row['mealID'])
-    return items
-# breakfast
-with col_b:
-    st.markdown("### Breakfast", unsafe_allow_html=True)
-    breakfast_items = meal_options("Breakfast")
-    breakfast_selection = []
-    for i, item in enumerate(breakfast_items):
-        if st.checkbox(f" {item}", key=f"bf_{i}_{item}"):
-            breakfast_selection.append(item)
+# Reset state if switching meals or locations
+if "prev_location" not in st.session_state:
+                st.session_state.prev_location = selected_location
+if "prev_meal" not in st.session_state:
+                st.session_state.prev_meal = selected_meal
 
+if (selected_location != st.session_state.prev_location or selected_meal != st.session_state.prev_meal):
+                st.session_state.selected_foods = set()
+                for food in food_names:
+                    key = f"toggle_{food}"
+                    if key in st.session_state:
+                        del st.session_state[key]
 
-# lunch
-with col_l:
-    st.markdown("### Lunch", unsafe_allow_html=True)
-    lunch_items = meal_options("Lunch")
-    lunch_selection = []
-    for i, item in enumerate(lunch_items):
-        if st.checkbox(f" {item}", key=f"l_{i}_{item}"):
-            lunch_selection.append(item)
+st.session_state.prev_location = selected_location
+st.session_state.prev_meal = selected_meal
 
+# Checkbox interface
+st.markdown("### What did you eat? (click to select, click again to unselect)")
+if "selected_foods" not in st.session_state:
+    st.session_state.selected_foods = set()
 
-# dinner
-with col_d:
-    st.markdown("### Dinner", unsafe_allow_html=True)
-    dinner_items = meal_options("Dinner")
-    dinner_selection = []
-    for i, item in enumerate(dinner_items):
-        if st.checkbox(f" {item}", key=f"d_{i}_{item}"):
-            dinner_selection.append(item)
+cols = st.columns(3)
+for i, food in enumerate(food_names):
+                key = f"toggle_{food}"
+                if key not in st.session_state:
+                    st.session_state[key] = False
 
+                with cols[i % 3]:
+                    toggled = st.checkbox(food, key=key)
+                    if toggled:
+                        st.session_state.selected_foods.add(food)
+                    else:
+                        st.session_state.selected_foods.discard(food)
 
-st.markdown("### Mood Today")
-mood = st.multiselect("Check all that apply", ["Happiness", "Sadness", "Anger", "Fear", "Disgust", "Surprise"])
+st.markdown(f"**Selected foods:** {', '.join(st.session_state.selected_foods) or 'None'}")
 
-st.markdown("### 📝 Notes")
-notes = st.text_area("Add thoughts, cravings, or anything else...")
+# Mood selection
+mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
 
-# # ========== SAVE ENTRIES ========== #
-# if st.button("💾 Save My Day"):
-#     for meal, food in zip(["Breakfast", "Lunch", "Dinner"], [breakfast, lunch, dinner]):
-#         add_journal_entry(user_email, formatted_date, location, meal, food,
-#                           ", ".join(mood), 0,
-#                           f"Water: {water} glasses | Sleep: {sleep}h | Exercise: {exercise} | Notes: {notes}")
-#     st.success("Your daily planner entry has been saved! 🌈")
+# Star Rating
+st.markdown("### Rate the food (double click to rate)")
+if "star_rating" not in st.session_state:
+                st.session_state.star_rating = 3
+cols = st.columns(5)
+for i in range(1, 6):
+                star = "⭐" if i <= st.session_state.star_rating else "☆"
+                if cols[i - 1].button(star, key=f"star_{i}"):
+                    st.session_state.star_rating = i
 
-# # ========== JOURNAL HISTORY ========== #
-# st.markdown("## 📖 Your Food Mood Feed")
-# st.markdown("_A cozy log of your eats, feelings, and thoughts..._")
-# st.markdown("---")
+st.markdown(f"You rated this: **{st.session_state.star_rating} / 5**")
+comments = st.text_area("Any reviews? (optional)", placeholder="Thoughts, questions, opinions...?")
 
-# for _, row in df_past.iterrows():
-#     with st.container():
-#         st.markdown(
-#             f"""
-#             <div style='
-#                 background-color: #2a2b38;
-#                 border-radius: 12px;
-#                 padding: 1.2rem;
-#                 margin-bottom: 1.2rem;
-#                 border: 1px solid #444;
-#             '>
-#                 <h3 style='color: #ffb6c1;'>📅 {row['Date']} — {row['Meal']} @ {row['Location']}</h3>
-#                 <p style='font-size: 1rem;'>
-#                     <strong>🍽️ What you ate:</strong> {row['Food']}<br>
-#                     <strong>🎭 Mood:</strong> {row['Mood']}<br>
-#                     <strong>📝 Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._' }<br>
-#                     <small>⏱️ Logged at: {row['Created At'][:16]}</small>
-#                 </p>
-#             </div>
-#             """,
-#             unsafe_allow_html=True
-#         )
+if st.button("Save Entry"):
+    selected_foods_str = ", ".join(st.session_state.selected_foods)
+    add_journal_entry(
+        user_email,
+        formatted_date,
+        selected_location,
+        selected_meal,
+        selected_foods_str,
+        mood,
+        st.session_state.star_rating,
+        comments)
+    st.success("Entry saved!")
+    st.session_state.selected_foods = set()
 
+# Past entries and mood trend
+st.markdown("### Your past journal entries")
+past = get_journal_entries(user_email)
+if past:
+    df_past = pd.DataFrame(past, columns=["Date", "Location", "Meal", "Food", "Mood", "Rating", "Comments", "Created At"])
+    for _, row in df_past.iterrows():
+        st.markdown(
+            f"""
+            <div class="journal-card">
+                <h3>{row['Date']} — {row['Meal']} @ {row['Location']}</h3>
+                <p><strong>What you ate:</strong> {row['Food']}</p>
+                <p><strong>Mood:</strong> {row['Mood']}</p>
+                <p><strong>Rating:</strong> {row['Rating']}</p>
+                <p><strong>Notes:</strong> {row['Comments'] if row['Comments'] else '_No notes..._'}</p>
+                <small>⏱️ Logged at: {row['Created At']}</small>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+else:
+    st.info("No entries yet.")
