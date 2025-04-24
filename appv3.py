@@ -1,6 +1,13 @@
 #app version 3 - with pages
 
 import streamlit as st
+import pandas as pd
+from datetime import datetime
+import os
+import uuid
+import requests
+import plotly.express as px
+st.set_page_config(page_title="Bubble", page_icon="🫧", layout="wide")
 from auth import google_login
 from user_profile import render_user_profile
 from db.bubbledb import (
@@ -10,16 +17,12 @@ from db.bubbledb import (
     create_posts_table, add_community_post, get_all_community_posts, drop_community_posts_table, 
     create_feedback_table, submit_feedback, get_all_feedback
 )
-st.set_page_config(page_title="Bubble", page_icon="🫧", layout="wide")
 
 create_tables()
 create_journal_table()
 create_posts_table()
 create_feedback_table()
 # delete_user("mk122@wellesley.edu")
-st.set_page_config(page_title="Bubble", page_icon="🫧", layout="wide")
-
-
 
 # DEBUG = False # keep False when testing Google Login
 DEBUG = True # set to True, when you don't want to go through authentication
@@ -142,59 +145,118 @@ else:
 
         with tabs[0]:
             st.title("🫧 Bubble: Food Journal")
-            # st.write("Session:", st.session_state)
-            if "user_email" in st.session_state:
-                user_email = st.session_state["user_email"]
 
-                # select date location meal
-                selected_date = st.date_input("Select date", value=datetime.today())
-                formatted_date = selected_date.strftime('%Y-%m-%d')
+            user_email = st.session_state.get("user_email")
 
-                selected_location = st.selectbox("Choose dining location", df['location'].unique())
-                meals = df[df['location'] == selected_location]['meal'].unique()
-                selected_meal = st.selectbox("Choose meal", meals)
+            # Select date, dining location, and meal
+            selected_date = st.date_input("Select date", value=datetime.today())
+            formatted_date = selected_date.strftime('%Y-%m-%d')
 
-                # get meal options
-                selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
-                locationID = selected_row['locationID']
-                mealID = selected_row['mealID']
-                menu_items = get_menu(formatted_date, locationID, mealID)
+            selected_location = st.radio("Choose dining location", df['location'].unique(), horizontal=True)
+            meals = df[df['location'] == selected_location]['meal'].unique()
+            selected_meal = st.radio("Choose meal", meals, horizontal=True)
 
-                food_names = [item['Name'] for item in menu_items]
-                selected_food = st.selectbox("What did you eat?", food_names)
-                mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
-                rating = st.slider("Rate the food (1 = worst, 5 = best)", 1, 5, 3)
-                comments = st.text_area("Any reviews? (optional)", placeholder="Thoughts, questions, opinions...?")
-                
-                if st.button("Save Entry"):
-                    add_journal_entry(user_email,formatted_date,selected_location,selected_meal,selected_food,mood,rating,comments)
-                    st.success("Entry saved!")
-                
-                #journal history
-                st.markdown("### Your past journal entries")
-                past = get_journal_entries(user_email)
-                if past:
-                    df_past = pd.DataFrame(past, columns=["Date", "Location", "Meal", "Food", "Mood", "Rating", "Comments", "Created At"])
-                    st.dataframe(df_past)
-                    # journal mood viz
-                    moods = {"😍 Loved it": 5,"😊 Happy": 4,"😐 Neutral": 3,"😕 Meh": 2,"😞 Unhappy": 1}
-                    st.markdown("### Mood Trend Over Time")
-                    df_past["Date"] = pd.to_datetime(df_past["Date"])
-                    df_past = df_past.sort_values("Date")
-                    df_past["Mood Score"] = df_past["Mood"].map(moods)
+            selected_row = df[(df['location'] == selected_location) & (df['meal'] == selected_meal)].iloc[0]
+            locationID = selected_row['locationID']
+            mealID = selected_row['mealID']
+            menu_items = get_menu(formatted_date, locationID, mealID)
 
-                    # plotly
-                    fig = px.line(df_past, x="Date", y="Mood Score", markers=True,
-                                title="Your mood trend based on food",
-                                labels={"Mood score": "Mood Rating (1-5)"})
-                    fig.update_layout(
-                        yaxis=dict(tickmode="array",tickvals=[1, 2, 3, 4, 5],
-                            ticktext=["😞 Unhappy", "😕 Meh", "😐 Neutral", "😊 Happy", "😍 Loved it"]
-                        )
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("No entries yet.")
+            food_names = sorted(set(item['Name'] for item in menu_items))
+
+            # Reset state if switching meals or locations
+            if "prev_location" not in st.session_state:
+                st.session_state.prev_location = selected_location
+            if "prev_meal" not in st.session_state:
+                st.session_state.prev_meal = selected_meal
+
+            if (
+                selected_location != st.session_state.prev_location or
+                selected_meal != st.session_state.prev_meal
+            ):
+                st.session_state.selected_foods = set()
+                for food in food_names:
+                    key = f"toggle_{food}"
+                    if key in st.session_state:
+                        del st.session_state[key]
+
+            st.session_state.prev_location = selected_location
+            st.session_state.prev_meal = selected_meal
+
+            # Checkbox interface
+            st.markdown("### What did you eat? (click to select, click again to unselect)")
+            if "selected_foods" not in st.session_state:
+                st.session_state.selected_foods = set()
+
+            cols = st.columns(3)
+            for i, food in enumerate(food_names):
+                key = f"toggle_{food}"
+                if key not in st.session_state:
+                    st.session_state[key] = False
+
+                with cols[i % 3]:
+                    toggled = st.checkbox(food, key=key)
+                    if toggled:
+                        st.session_state.selected_foods.add(food)
+                    else:
+                        st.session_state.selected_foods.discard(food)
+
+            st.markdown(f"**Selected foods:** {', '.join(st.session_state.selected_foods) or 'None'}")
+
+            # Mood selection
+            mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
+
+            # Star Rating
+            st.markdown("### Rate the food (double click to rate)")
+            if "star_rating" not in st.session_state:
+                st.session_state.star_rating = 3
+            cols = st.columns(5)
+            for i in range(1, 6):
+                star = "⭐" if i <= st.session_state.star_rating else "☆"
+                if cols[i - 1].button(star, key=f"star_{i}"):
+                    st.session_state.star_rating = i
+
+            st.markdown(f"You rated this: **{st.session_state.star_rating} / 5**")
+
+            comments = st.text_area("Any reviews? (optional)", placeholder="Thoughts, questions, opinions...?")
+
+            if st.button("Save Entry"):
+                selected_foods_str = ", ".join(st.session_state.selected_foods)
+                add_journal_entry(
+                    user_email,
+                    formatted_date,
+                    selected_location,
+                    selected_meal,
+                    selected_foods_str,
+                    mood,
+                    st.session_state.star_rating,
+                    comments
+                )
+                st.success("Entry saved!")
+                st.session_state.selected_foods = set()
+
+            # Past entries and mood trend
+            st.markdown("### Your past journal entries")
+            past = get_journal_entries(user_email)
+            if past:
+                df_past = pd.DataFrame(past, columns=["Date", "Location", "Meal", "Food", "Mood", "Rating", "Comments", "Created At"])
+                st.dataframe(df_past)
+
+                moods = {"😍 Loved it": 5,"😊 Happy": 4,"😐 Neutral": 3,"😕 Meh": 2,"😞 Unhappy": 1}
+                st.markdown("### Mood Trend Over Time")
+                df_past["Date"] = pd.to_datetime(df_past["Date"])
+                df_past = df_past.sort_values("Date")
+                df_past["Mood Score"] = df_past["Mood"].map(moods)
+
+                fig = px.line(df_past, x="Date", y="Mood Score", markers=True,
+                            title="Your mood trend based on food",
+                            labels={"Mood score": "Mood Rating (1-5)"})
+                fig.update_layout(
+                    yaxis=dict(tickmode="array",tickvals=[1, 2, 3, 4, 5],
+                        ticktext=["😞 Unhappy", "😕 Meh", "😐 Neutral", "😊 Happy", "😍 Loved it"])
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No entries yet.")
 
     
 
@@ -203,28 +265,98 @@ else:
             st.title("Community Feed")
             user_email = st.session_state.get("user_email")
 
+            # resest to defaults
+            if "post_title" not in st.session_state:
+                st.session_state.post_title = ""
+            if "post_description" not in st.session_state:
+                st.session_state.post_description = ""
+            if "post_star_rating" not in st.session_state:
+                st.session_state.post_star_rating = 3
+            if "deleted_post" not in st.session_state:
+                st.session_state.deleted_post = None
+
+            # star ratings
+            st.markdown("### Rate this food")
+            rating_cols = st.columns(5)
+            for i in range(1, 6):
+                star = "⭐" if i <= st.session_state.post_star_rating else "☆"
+                if rating_cols[i - 1].button(star, key=f"post_star_{i}"):
+                    st.session_state.post_star_rating = i
+
+            st.markdown(f"You rated this: **{st.session_state.post_star_rating} / 5**")
+
+            # post forms
             with st.form("post_form"):
                 img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-                caption = st.text_area("Enter a caption")
-                rating = st.slider("Rate this food", 1, 5, 3)
-                if st.form_submit_button("Post"):
-                    if img:
-                        os.makedirs("posts", exist_ok=True)
-                        post_id = str(uuid.uuid4())
-                        file_path = f"posts/{post_id}.jpg"
-                        with open(file_path, "wb") as f:
-                            f.write(img.read())
-                        add_community_post(post_id, user_email, file_path, caption, rating, str(datetime.now()))
-                st.markdown("### Explore all the posts")
-                posts = get_all_community_posts()
+                title = st.text_input("Post Title", value=st.session_state.post_title)
+                description = st.text_area("Post Description", value=st.session_state.post_description)
+                submitted = st.form_submit_button("Post")
 
-                cols = st.columns(3)
-                for i, (post_id, email, img_path, caption, rating, created_at) in enumerate(posts):
-                    with cols[i % 3]:
-                            st.image(img_path, use_container_width=True)
-                            st.caption(caption)
-                            st.markdown(f"{'⭐' * rating + '☆' * (5 - rating)}")
-                            st.markdown(f"*Posted by {email.split('@')[0]} — {created_at[:10]}*")
+            if submitted:
+                if img and title:
+                    os.makedirs("posts", exist_ok=True)
+                    post_id = str(uuid.uuid4())
+                    file_path = f"posts/{post_id}.jpg"
+                    with open(file_path, "wb") as f:
+                        f.write(img.read())
+                    add_community_post(
+                        post_id,
+                        user_email,
+                        file_path,
+                        f"{title}||{description}",
+                        st.session_state.post_star_rating,
+                        str(datetime.now())
+                    )
+                    st.success("Post uploaded!")
+
+                    # resetting fields
+                    st.session_state.post_title = ""
+                    st.session_state.post_description = ""
+                    st.session_state.post_star_rating = 3
+                    st.rerun()
+                else:
+                    st.warning("Please include at least an image and a title.")
+
+            # delete posts
+            def delete_post(post_id, img_path):
+                try:
+                    if os.path.exists(img_path):
+                        os.remove(img_path)
+                except Exception as e:
+                    st.error(f"Error deleting image file: {e}")
+
+                try:
+                    delete_community_post(post_id)
+                except Exception as e:
+                    st.error(f"Error deleting post from database: {e}")
+
+                st.session_state.deleted_post = post_id
+                st.rerun()
+
+            # displaying posts
+            st.markdown("### Explore all the posts")
+            posts = get_all_community_posts()
+            cols = st.columns(3)
+
+            for i, (post_id, email, img_path, full_caption, rating, created_at) in enumerate(posts):
+                if post_id == st.session_state.get("deleted_post"):
+                    continue
+
+                title, description = (full_caption.split("||") + [""])[0:2]
+                with cols[i % 3]:
+                    if os.path.exists(img_path):
+                        st.image(img_path, use_container_width=True)
+                    else:
+                        st.warning("Image file not found.")
+                    st.markdown(f"**{title.strip()}**")
+                    if description.strip():
+                        st.caption(description.strip())
+                    st.markdown(f"{'⭐' * rating + '☆' * (5 - rating)}")
+                    st.markdown(f"*Posted by {email.split('@')[0]} — {created_at[:10]}*")
+
+                    if email == user_email:
+                        if st.button("🗑️ Delete", key=f"delete_{post_id}"):
+                            delete_post(post_id, img_path)
                 
         #Resources
         with tabs[2]:
