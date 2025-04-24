@@ -49,7 +49,6 @@ def google_login():
             st.query_params.clear()
             return False
 
-    # 👤 Step 2: Not logged in → show login button with state in URL
     if "access_token" not in st.session_state:
         oauth = OAuth2Session(
             client_id=CLIENT_ID,
@@ -71,5 +70,4 @@ def google_login():
         )
         return False
 
-    # ✅ Already logged in
     return True
