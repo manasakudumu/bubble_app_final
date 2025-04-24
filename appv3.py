@@ -171,30 +171,28 @@ else:
                 menu_items = get_menu(formatted_date, locationID, mealID)
 
                 food_names = [item['Name'] for item in menu_items]
-        
                 st.markdown("### What did you eat? (Click to select, click again to unselect)")
 
                 if "selected_foods" not in st.session_state:
                     st.session_state.selected_foods = set()
 
-                cols = st.columns(3)  # num buttons per row
-
+                cols = st.columns(3)  # num columns
                 for i, food in enumerate(food_names):
-                    key = f"toggle_{food}"
+                    if food in st.session_state.selected_foods:
+                        button_label = f"✅ {food}"
+                        color = "lightgreen"
+                    else:
+                        button_label = food
+                        color = "white"
 
-                    # initialize food toggle state
-                    if key not in st.session_state:
-                        st.session_state[key] = False
-
-                    # using checkbox as a workaround for persistent state
-                    with cols[i % 3]:
-                        toggled = st.checkbox(f"{'✅' if st.session_state[key] else '⬜'} {food}", key=key)
-                        if toggled:
-                            st.session_state.selected_foods.add(food)
+                    # clickable box per food
+                    if cols[i % 3].button(button_label, key=f"food_{i}"):
+                        if food in st.session_state.selected_foods:
+                            st.session_state.selected_foods.remove(food)
                         else:
-                            st.session_state.selected_foods.discard(food)
+                            st.session_state.selected_foods.add(food)
 
-                # diplay current selection
+                # show what was selected
                 st.markdown(f"**Selected foods:** {', '.join(st.session_state.selected_foods) or 'None'}")
 
 
