@@ -171,7 +171,30 @@ else:
                 menu_items = get_menu(formatted_date, locationID, mealID)
 
                 food_names = [item['Name'] for item in menu_items]
-                selected_food = st.selectbox("What did you eat?", food_names)
+        
+                st.markdown("### What did you eat? (Click to select, click again to unselect)")
+                if "selected_foods" not in st.session_state:
+                    st.session_state.selected_foods = set()
+
+                cols = st.columns(3)  #number of columns
+                for i, food in enumerate(food_names):
+                    if food in st.session_state.selected_foods:
+                        button_label = f"✅ {food}"
+                        color = "lightgreen"
+                    else:
+                        button_label = food
+                        color = "white"
+
+                    #clickable box per food
+                    if cols[i % 3].button(button_label, key=f"food_{i}"):
+                        if food in st.session_state.selected_foods:
+                            st.session_state.selected_foods.remove(food)
+                        else:
+                            st.session_state.selected_foods.add(food)
+
+                # showing what was selected
+                st.markdown(f"**Selected foods:** {', '.join(st.session_state.selected_foods) or 'None'}")
+
                 mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
                 rating = st.slider("Rate the food (1 = worst, 5 = best)", 1, 5, 3)
                 comments = st.text_area("Any reviews? (optional)", placeholder="Thoughts, questions, opinions...?")
