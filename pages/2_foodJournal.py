@@ -149,19 +149,25 @@ if past:
 
     # filters
     st.markdown("### Filter your journal history")
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
+
     with col1:
         selected_filter_location = st.selectbox("Dining Hall", ["All"] + sorted(df_past["Location"].unique()))
     with col2:
         selected_filter_meal = st.selectbox("Meal", ["All"] + sorted(df_past["Meal"].unique()))
     with col3:
         date_range = st.date_input("Date Range", [df_past["Date"].min(), df_past["Date"].max()])
+    with col4:
+        selected_filter_mood = st.selectbox("Mood", ["All"] + sorted(df_past["Mood"].unique()))
+
     filtered_df = df_past.copy()
 
     if selected_filter_location != "All":
         filtered_df = filtered_df[filtered_df["Location"] == selected_filter_location]
     if selected_filter_meal != "All":
         filtered_df = filtered_df[filtered_df["Meal"] == selected_filter_meal]
+    if selected_filter_mood != "All":
+        filtered_df = filtered_df[filtered_df["Mood"] == selected_filter_mood]
     if isinstance(date_range, list) and len(date_range) == 2:
         start_date, end_date = date_range
         filtered_df = filtered_df[

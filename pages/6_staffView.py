@@ -38,17 +38,20 @@ else:
             st.markdown(
                 f"""
                 <div style='
-                    background-color: #292b36;
+                    background-color: white;
                     border-radius: 12px;
                     padding: 1.2rem 1.5rem;
                     margin-bottom: 1.2rem;
-                    border: 1px solid #444;
-                    color: #ffffff;
+                    border: 1px solid #e0d2d8;
+                    color: #000000;
                 '>
-                    <h4 style='color: #ffb6c1; margin-top: 0;'> Feedback #{len(filtered_feedback) - i}</h4>
-                    <pre style='white-space: pre-wrap; font-size: 0.95rem; color: #ffffff;'>{msg}</pre>
-                    <p style='font-size: 0.85rem; color: #cccccc;'>Submitted: {timestamp[:16]}</p>
+                    <h4 style='color: #ff9ecb; margin-top: 0;'>Feedback #{len(filtered_feedback) - i}</h4>
+                    <pre style='white-space: pre-wrap; font-size: 0.95rem; color: #000000;'>{msg}</pre>
+                    <p style='font-size: 0.85rem; color: #444;'>Submitted: {timestamp[:16]}</p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
+
+
