@@ -17,7 +17,7 @@ create_tables()
 create_journal_table()
 create_posts_table()
 create_feedback_table()
-# delete_user("mk122@wellesley.edu")
+# delete_user("ps105@wellesley.edu")
 
 st.sidebar.header("Login")
 
@@ -25,6 +25,7 @@ st.sidebar.header("Login")
 if "access_token" not in st.session_state:
     st.sidebar.write("Please log in with your Google account:")
     if google_login():
+        print("🆕 Version 3 is running!")
         st.rerun()
     st.stop()
 

@@ -33,6 +33,7 @@ def render_user_profile():
             user = get_user_info(access_token)
             if not user:
                 st.sidebar.success("Logged in ✅")
+                print("🆕 Version 3 is running!")
                 return
             first_name = user.get("given_name") or user.get("name", "there").split()[0]
             picture = user.get("picture")
