@@ -11,7 +11,7 @@ from db.bubbledb import (
     add_user, get_user, delete_user, 
     add_journal_entry, get_journal_entries, 
     create_posts_table, add_community_post, get_all_community_posts, drop_community_posts_table, 
-    create_feedback_table, submit_feedback, get_all_feedback
+    create_feedback_table, submit_feedback, get_all_feedback, delete_community_post, clear_all_community_posts
 )
 
 create_tables()
@@ -26,6 +26,8 @@ st.set_page_config(page_title="Bubble", page_icon="🫧", layout="wide")
 
 # DEBUG = False # keep False when testing Google Login
 DEBUG = True # set to True, when you don't want to go through authentication
+
+
 def fake_login():
     """A simple function to handle the fake login process.
     """
@@ -170,40 +172,78 @@ else:
                 mealID = selected_row['mealID']
                 menu_items = get_menu(formatted_date, locationID, mealID)
 
-                food_names = [item['Name'] for item in menu_items]
-                st.markdown("### What did you eat? (Click to select, click again to unselect)")
+                food_names = sorted(set(item['Name'] for item in menu_items))
+
+                ##reset if user switches dining hall or meal
+                if "prev_location" not in st.session_state:
+                    st.session_state.prev_location = selected_location
+                if "prev_meal" not in st.session_state:
+                    st.session_state.prev_meal = selected_meal
+
+                if (
+                    selected_location != st.session_state.prev_location or
+                    selected_meal != st.session_state.prev_meal
+                ):
+                    st.session_state.selected_foods = set()
+                    for food in food_names:
+                        key = f"toggle_{food}"
+                        if key in st.session_state:
+                            del st.session_state[key]
+
+                st.session_state.prev_location = selected_location
+                st.session_state.prev_meal = selected_meal
+
+                # now show checkboxes
+                st.markdown("### What did you eat? (click to select, click again to unselect)")
 
                 if "selected_foods" not in st.session_state:
                     st.session_state.selected_foods = set()
 
-                cols = st.columns(3)  # num columns
+                cols = st.columns(3)
                 for i, food in enumerate(food_names):
-                    if food in st.session_state.selected_foods:
-                        button_label = f"✅ {food}"
-                        color = "lightgreen"
-                    else:
-                        button_label = food
-                        color = "white"
+                    key = f"toggle_{food}"
+                    if key not in st.session_state:
+                        st.session_state[key] = False
 
-                    # clickable box per food
-                    if cols[i % 3].button(button_label, key=f"food_{i}"):
-                        if food in st.session_state.selected_foods:
-                            st.session_state.selected_foods.remove(food)
-                        else:
+                    with cols[i % 3]:
+                        toggled = st.checkbox(food, key=key)
+                        if toggled:
                             st.session_state.selected_foods.add(food)
+                        else:
+                            st.session_state.selected_foods.discard(food)
 
-                # show what was selected
                 st.markdown(f"**Selected foods:** {', '.join(st.session_state.selected_foods) or 'None'}")
 
-
                 mood = st.selectbox("How did it make you feel?", ["😍 Loved it","😊 Happy", "😐 Neutral", "😕 Meh","😞 Unhappy"])
-                rating = st.slider("Rate the food (1 = worst, 5 = best)", 1, 5, 3)
+            
+                st.markdown("### Rate the food (double click to rate)")
+                if "star_rating" not in st.session_state:
+                    st.session_state.star_rating = 3  # default rating
+                cols = st.columns(5)
+                for i in range(1, 6):
+                    star = "⭐" if i <= st.session_state.star_rating else "☆"
+                    if cols[i-1].button(star, key=f"star_{i}"):
+                        st.session_state.star_rating = i
+
+                st.markdown(f"You rated this: **{st.session_state.star_rating} / 5**")
                 comments = st.text_area("Any reviews? (optional)", placeholder="Thoughts, questions, opinions...?")
                 
-                if st.button("Save Entry"):
-                    add_journal_entry(user_email,formatted_date,selected_location,selected_meal,selected_food,mood,rating,comments)
-                    st.success("Entry saved!")
                 
+                if st.button("Save Entry"):
+                    selected_foods_str = ", ".join(st.session_state.selected_foods)
+                    add_journal_entry(
+                        user_email,
+                        formatted_date,
+                        selected_location,
+                        selected_meal,
+                        selected_foods_str,
+                        mood,
+                        rating,
+                        comments
+                    )
+                    st.success("Entry saved!")
+                    st.session_state.selected_foods = set()  # reseting after saving
+
                 #journal history
                 st.markdown("### Your past journal entries")
                 past = get_journal_entries(user_email)
@@ -218,7 +258,7 @@ else:
                     df_past["Mood Score"] = df_past["Mood"].map(moods)
 
                     # plotly
-                    #### maybe could use a heatmap visualization instead of line plot
+                    #### maybe could use a heatmap visualization instead of line plot?
                     fig = px.line(df_past, x="Date", y="Mood Score", markers=True,
                                 title="Your mood trend based on food",
                                 labels={"Mood score": "Mood Rating (1-5)"})
@@ -235,31 +275,111 @@ else:
 
         #Community
         with tabs[1]:
+            # if DEBUG: #getting rid of all of the posts to test post functionts
+            #     if st.sidebar.button("⚠️ Clear All Posts"):
+            #         clear_all_community_posts()
+            #         for f in os.listdir("posts"):
+            #             if f.endswith(".jpg"):
+            #                 os.remove(os.path.join("posts", f))
+            #         st.success("All posts cleared.")
+            #         st.rerun()
             st.title("Community Feed")
             user_email = st.session_state.get("user_email")
 
+            # Reset state defaults (except file_uploader — not allowed in st.session_state)
+            if "post_title" not in st.session_state:
+                st.session_state.post_title = ""
+            if "post_description" not in st.session_state:
+                st.session_state.post_description = ""
+            if "post_star_rating" not in st.session_state:
+                st.session_state.post_star_rating = 3
+            if "deleted_post" not in st.session_state:
+                st.session_state.deleted_post = None
+
+            # ⭐ Star rating outside the form
+            st.markdown("### Rate this food")
+            rating_cols = st.columns(5)
+            for i in range(1, 6):
+                star = "⭐" if i <= st.session_state.post_star_rating else "☆"
+                if rating_cols[i - 1].button(star, key=f"post_star_{i}"):
+                    st.session_state.post_star_rating = i
+
+            st.markdown(f"You rated this: **{st.session_state.post_star_rating} / 5**")
+
+            # 📝 Post form
             with st.form("post_form"):
                 img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-                caption = st.text_area("Enter a caption")
-                rating = st.slider("Rate this food", 1, 5, 3)
-                if st.form_submit_button("Post"):
-                    if img:
-                        os.makedirs("posts", exist_ok=True)
-                        post_id = str(uuid.uuid4())
-                        file_path = f"posts/{post_id}.jpg"
-                        with open(file_path, "wb") as f:
-                            f.write(img.read())
-                        add_community_post(post_id, user_email, file_path, caption, rating, str(datetime.now()))
-                st.markdown("### Explore all the posts")
-                posts = get_all_community_posts()
+                title = st.text_input("Post Title", value=st.session_state.post_title)
+                description = st.text_area("Post Description", value=st.session_state.post_description)
+                submitted = st.form_submit_button("Post")
 
-                cols = st.columns(3)
-                for i, (post_id, email, img_path, caption, rating, created_at) in enumerate(posts):
-                    with cols[i % 3]:
-                            st.image(img_path, use_container_width=True)
-                            st.caption(caption)
-                            st.markdown(f"{'⭐' * rating + '☆' * (5 - rating)}")
-                            st.markdown(f"*Posted by {email.split('@')[0]} — {created_at[:10]}*")
+            if submitted:
+                if img and title:
+                    os.makedirs("posts", exist_ok=True)
+                    post_id = str(uuid.uuid4())
+                    file_path = f"posts/{post_id}.jpg"
+                    with open(file_path, "wb") as f:
+                        f.write(img.read())
+                    add_community_post(
+                        post_id,
+                        user_email,
+                        file_path,
+                        f"{title}||{description}",
+                        st.session_state.post_star_rating,
+                        str(datetime.now())
+                    )
+                    st.success("Post uploaded!")
+
+                    # ✅ Reset fields
+                    st.session_state.post_title = ""
+                    st.session_state.post_description = ""
+                    st.session_state.post_star_rating = 3
+                    st.rerun()
+                else:
+                    st.warning("Please include at least an image and a title.")
+
+            # 🔄 Delete Post Handling
+            def delete_post(post_id, img_path):
+                try:
+                    if os.path.exists(img_path):
+                        os.remove(img_path)
+                except Exception as e:
+                    st.error(f"Error deleting image file: {e}")
+
+                try:
+                    delete_community_post(post_id)
+                except Exception as e:
+                    st.error(f"Error deleting post from database: {e}")
+
+                st.session_state.deleted_post = post_id
+                st.rerun()
+
+            # 📌 Display posts in 3-column grid
+            st.markdown("### Explore all the posts")
+            posts = get_all_community_posts()
+            cols = st.columns(3)
+
+            for i, (post_id, email, img_path, full_caption, rating, created_at) in enumerate(posts):
+                if post_id == st.session_state.get("deleted_post"):
+                    continue
+
+                title, description = (full_caption.split("||") + [""])[0:2]
+                with cols[i % 3]:
+                    if os.path.exists(img_path):
+                        st.image(img_path, use_container_width=True)
+                    else:
+                        st.warning("Image file not found.")
+                    st.markdown(f"**{title.strip()}**")
+                    if description.strip():
+                        st.caption(description.strip())
+                    st.markdown(f"{'⭐' * rating + '☆' * (5 - rating)}")
+                    st.markdown(f"*Posted by {email.split('@')[0]} — {created_at[:10]}*")
+
+                    if email == user_email:
+                        if st.button("🗑️ Delete", key=f"delete_{post_id}"):
+                            delete_post(post_id, img_path)
+
+
                 
         #Resources
         with tabs[2]:
@@ -340,4 +460,3 @@ else:
                 st.markdown(" " + msg)
                 st.caption(f"Submitted on {submitted[:16]}")
                 st.markdown("---")
-       
