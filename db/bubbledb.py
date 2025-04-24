@@ -172,3 +172,18 @@ def get_all_feedback():
     """)
     return cursor.fetchall()
 
+def delete_community_post(post_id):
+    conn = sqlite3.connect("bubbledb.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM community_posts WHERE id = ?", (post_id,))
+    conn.commit()
+    conn.close()
+
+def clear_all_community_posts():
+    conn = sqlite3.connect("bubbledb.db")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM community_posts")
+    conn.commit()
+    conn.close()
+
+
