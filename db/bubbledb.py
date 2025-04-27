@@ -11,14 +11,14 @@ def create_tables():
     conn.commit()
     conn.close()
 
-def add_user(email, name, role, preferred_name, class_year, pronouns):
+def add_user(email, name, role):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute('''
-    INSERT OR REPLACE INTO users (email, name, role, preferred_name, class_year, pronouns)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ''', (email, name, role, preferred_name, class_year, pronouns))
+    INSERT OR REPLACE INTO users (email, name, role)
+    VALUES (?, ?, ?)
+    ''', (email, name, role))
 
     conn.commit()
     conn.close()
@@ -33,7 +33,21 @@ def get_user(email):
     conn.close()
     return user
 
-def update_profile(email, preferred_name, class_year, pronouns):
+def get_user_image(email):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT image FROM users WHERE email = ?', (email,))
+    image = cursor.fetchone()
+
+    conn.close()
+    
+    if image:
+        return image[0] 
+    else:
+        return None
+
+def update_profile(preferred_name, class_year, pronouns, image):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -41,7 +55,7 @@ def update_profile(email, preferred_name, class_year, pronouns):
     UPDATE users
     SET preferred_name = ?, class_year = ?, pronouns = ?
     WHERE email = ?
-    ''', (preferred_name, class_year, pronouns, email))
+    ''', (preferred_name, class_year, pronouns, image))
 
     conn.commit()
     conn.close()
@@ -63,6 +77,11 @@ def alter_users_table():
 
     try:
         cursor.execute("ALTER TABLE users ADD COLUMN pronouns TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN image BLOB")
     except sqlite3.OperationalError:
         pass
 

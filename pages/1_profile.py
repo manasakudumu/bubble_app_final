@@ -1,5 +1,5 @@
 import streamlit as st
-from db.bubbledb import get_user, add_user,alter_users_table
+from db.bubbledb import get_user, update_profile
 
 #alter_users_table()
 def setupProfile():
@@ -18,19 +18,43 @@ def setupProfile():
         if not existing_user:
             st.header(f"Hi {user_name}!\nLet's Set Up Your Profile:")
 
-        prefName = st.text_input("Enter Your Preferred Name", key="prefName_input")  # Unique key
-        yr = st.selectbox("Select Your Class Year", ["2025", "2026", "2027", "2028"], key="yr_select")  # Unique key
-        pronouns = st.selectbox("Select Your Pronouns", ["She/Her", "He/Him", "They/Them"], key="pronouns_select")  # Unique key
-        image = st.file_uploader("Upload Profile Photo", type=["jpg", "jpeg", "png"], key="image_uploader")  # Unique key
+            prefName = st.text_input("Enter Your Preferred Name", key="prefName_input")  # Unique key
+            yr = st.selectbox("Select Your Class Year", ["2025", "2026", "2027", "2028"], key="yr_select")  # Unique key
+            pronouns = st.selectbox("Select Your Pronouns", ["She/Her", "He/Him", "They/Them"], key="pronouns_select")  # Unique key
+            
+            imageFile = st.file_uploader("Upload Profile Photo", type=["jpg", "jpeg", "png"], key="image_uploader")  # Unique key
+            if imageFile is not None:
+                image = imageFile.read()
 
-        if st.button("Save Profile"):
-            st.session_state["prefName"] = prefName
-            st.session_state["yr"] = yr
-            st.session_state["pronouns"] = pronouns
-            st.session_state["image"] = image
-            add_user(user_email, user_name, 'student', prefName, yr, pronouns)
-            st.success("Profile completed successfully!")
-            st.rerun()
+
+            if st.button("Save Profile"):
+                st.session_state["prefName"] = prefName
+                st.session_state["yr"] = yr
+                st.session_state["pronouns"] = pronouns
+                st.session_state["image"] = image
+                update_profile(prefName, yr, pronouns, image)
+                st.success("Profile completed successfully!")
+                st.rerun()
+        else:
+            user_name=user_name.split()[0]
+            st.header(f"Welcome back, {user_name}!\nEdit Your Profile Below")
+            
+            prefName = st.text_input("Enter Your Preferred Name", key="prefName_input")  # Unique key
+            yr = st.selectbox("Select Your Class Year", ["2025", "2026", "2027", "2028"], key="yr_select")  # Unique key
+            pronouns = st.selectbox("Select Your Pronouns", ["She/Her", "He/Him", "They/Them"], key="pronouns_select")  # Unique key
+            
+            image=None
+            imageFile= st.file_uploader("Upload Profile Photo", type=["jpg", "jpeg", "png"], key="image_uploader")  # Unique key
+            if imageFile is not None:
+                image = imageFile.read()
+ 
+            if st.button("Save Profile"):
+                st.session_state["prefName"] = prefName
+                st.session_state["yr"] = yr
+                st.session_state["pronouns"] = pronouns
+                st.session_state["image"] = image
+                update_profile(prefName, yr, pronouns, image)
+                st.success("Profile updated successfully!")
 
     else:
         st.warning("Please log in to set up your profile.")

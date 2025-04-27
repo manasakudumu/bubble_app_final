@@ -17,7 +17,7 @@ create_tables()
 create_journal_table()
 create_posts_table()
 create_feedback_table()
-# delete_user("mk122@wellesley.edu")
+ # delete_user("ps105@wellesley.edu")
 
 st.sidebar.header("Login")
 
@@ -25,7 +25,6 @@ st.sidebar.header("Login")
 if "access_token" not in st.session_state:
     st.sidebar.write("Please log in with your Google account:")
     if google_login():
-        print("🆕 Version 3 is running!")
         st.rerun()
     st.stop()
 
@@ -52,11 +51,11 @@ existing_user = get_user(user_email)
 if not existing_user:
     st.markdown("### Welcome!")
     st.info("Please select your role to continue.")
-    role_selection = st.radio("Are you a student or staff?", ["Student", "Staff"])
+    role = st.radio("Are you a student or staff?", ["Student", "Staff"])
     if st.button("Save Role"):
-        add_user(user_email, user_name, role_selection)
+        add_user(user_email, user_name, role)
         st.success("Role saved! Redirecting...") 
-        if role_selection == "Student":
+        if role == "Student":
             st.switch_page("pages/1_profile.py") 
         else:
             st.switch_page("pages/6_staffView.py")
@@ -88,13 +87,19 @@ if role == "Student":
 
     st.divider()
     st.markdown("### More tools")
-    col4, col5 = st.columns(2)
+    col4, col5, col6 = st.columns(3)
     with col4:
         if st.button("Resources"):
             st.switch_page("pages/5_resources.py")
     with col5:
         if st.button("My Profile"):
             st.switch_page("pages/1_profile.py")
+    with col6:
+        if st.button('Log Out', key='logout', help="Click to log out", use_container_width=True):
+            st.session_state.clear() 
+            st.sidebar.write("Logged out successfully.")
+            st.rerun() 
+
 
 elif role == "Staff":
     st.success("You're logged in as dining staff")
