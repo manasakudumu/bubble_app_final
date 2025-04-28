@@ -72,4 +72,3 @@ fig.update_layout(
 )
 fig.update_traces(line=dict(color="#0080FF", width=3))
 st.plotly_chart(fig, use_container_width=True)
-

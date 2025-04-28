@@ -7,19 +7,16 @@ def get_connection():
 def create_tables():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, name TEXT, role TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (email TEXT PRIMARY KEY, name TEXT, role TEXT,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.commit()
     conn.close()
 
-def add_user(email, name, role, preferred_name, class_year, pronouns):
+def add_user(email, name, role):
     conn = get_connection()
     cursor = conn.cursor()
-
     cursor.execute('''
-    INSERT OR REPLACE INTO users (email, name, role, preferred_name, class_year, pronouns)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ''', (email, name, role, preferred_name, class_year, pronouns))
-
+    INSERT OR IGNORE INTO users (email, name, role) VALUES (?, ?, ?)
+    ''', (email, name, role))
     conn.commit()
     conn.close()
 
@@ -32,42 +29,6 @@ def get_user(email):
     
     conn.close()
     return user
-
-def update_profile(email, preferred_name, class_year, pronouns):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute('''
-    UPDATE users
-    SET preferred_name = ?, class_year = ?, pronouns = ?
-    WHERE email = ?
-    ''', (preferred_name, class_year, pronouns, email))
-
-    conn.commit()
-    conn.close()
-
-def alter_users_table():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # Add missing columns
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN preferred_name TEXT")
-    except sqlite3.OperationalError:
-        pass  # Ignore if the column already exists
-
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN class_year TEXT")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN pronouns TEXT")
-    except sqlite3.OperationalError:
-        pass
-
-    conn.commit()
-    conn.close()
 
 
 def create_journal_table():
