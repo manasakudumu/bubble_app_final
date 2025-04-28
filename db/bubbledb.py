@@ -14,11 +14,11 @@ def create_tables():
 def add_user(email, name, role):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-    INSERT OR IGNORE INTO users (email, name, role) VALUES (?, ?, ?)
+    cursor.execute('''INSERT OR IGNORE INTO users (email, name, role) VALUES (?, ?, ?)
     ''', (email, name, role))
     conn.commit()
     conn.close()
+
 
 def get_user(email):
     conn = get_connection()
@@ -29,6 +29,61 @@ def get_user(email):
     
     conn.close()
     return user
+
+def get_user_image(email):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT image FROM users WHERE email = ?', (email,))
+    image = cursor.fetchone()
+
+    conn.close()
+    
+    if image:
+        return image[0] 
+    else:
+        return None
+
+def update_profile(preferred_name, class_year, pronouns, image):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+    UPDATE users
+    SET preferred_name = ?, class_year = ?, pronouns = ?
+    WHERE email = ?
+    ''', (preferred_name, class_year, pronouns, image))
+
+    conn.commit()
+    conn.close()
+
+def alter_users_table():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Add missing columns
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN preferred_name TEXT")
+    except sqlite3.OperationalError:
+        pass  # Ignore if the column already exists
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN class_year TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN pronouns TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN image BLOB")
+    except sqlite3.OperationalError:
+        pass
+
+    conn.commit()
+    conn.close()
 
 
 def create_journal_table():

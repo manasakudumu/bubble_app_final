@@ -17,7 +17,6 @@ create_tables()
 create_journal_table()
 create_posts_table()
 create_feedback_table()
-delete_user("mk122@wellesley.edu")
 
 st.sidebar.header("Login")
 
