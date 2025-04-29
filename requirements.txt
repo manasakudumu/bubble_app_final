@@ -1,0 +1,5 @@
+streamlit
+authlib
+requests
+pandas
+plotly
