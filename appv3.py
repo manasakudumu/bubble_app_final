@@ -1,5 +1,3 @@
-#app version 3 - with pages
-
 import streamlit as st
 from auth import google_login
 from user_profile import render_user_profile
@@ -18,9 +16,29 @@ create_journal_table()
 create_posts_table()
 create_feedback_table()
 
+delete_user("mk122@wellesley.edu")
+
 st.sidebar.header("Login")
 
-# Google OAuth login
+st.markdown(
+    """
+    <div style='
+        background-color: #fef6fb;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        border: 2px solid #ffd6e7;
+        margin-top: 2rem;
+    '>
+        <h1 style='font-size: 2.8rem;'>🫧 Welcome to Bubble! 🫧</h1>
+        <p style='font-size: 1.2rem; margin-top: 1rem;'>
+            Please log in to start journaling your meals, sharing love, and exploring the community! 💌
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 if "access_token" not in st.session_state:
     st.sidebar.write("Please log in with your Google account:")
     if google_login():
