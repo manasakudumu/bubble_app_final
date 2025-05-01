@@ -1,33 +1,56 @@
-body {
-    background-image: url('https://img.freepik.com/free-vector/french-cafe-background-women-rsquo-s-lifestyle-illustration-vector_53876-156596.jpg?semt=ais_hybrid&w=740');
+
+@import url('https://fonts.cdnfonts.com/css/bubble-bobble');
+
+
+.stApp {
+    background-image: url('https://images.pexels.com/photos/207495/pexels-photo-207495.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
     background-size: cover;
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-position: center;
-}
-
-.stApp {
-    background-color: rgba(255, 255, 255, 0.85);
-    padding: 2rem 0;
     display: flex;
     justify-content: center;
     flex-direction: column;
     align-items: center;
 }
 
-h1, h2, h3, h4 {
-    color: #222;
+html, body, .stApp {
+    font-family: 'Bubble Bobble', sans-serif;
+    font-weight: bold;
+    color: blue;
+}
+
+.stHeading, .stMarkdown, .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
+    font-family: 'Bubble Bobble', sans-serif;
+
+    color: white;
+
+}
+
+section[data-testid="stSidebar"] * {
+    color: navy;
+    font-family: 'Bubble Bobble', sans-serif;
+
+    font-weight: bold;
+    background-color: white 
+}
+
+h1, h2, h3, h4, p {
+    font-family: 'Bubble Bobble', sans-serif;
+
+    color: white;
 }
 
 a {
-    color: #0066cc;
+    color: #ffffff;
 }
 
 .journal-card {
-    background: #ffffffdd;
-    border: 1px solid #e0e0e0;
-    border-left: 6px solid #ffb6c1; 
+    /* background: #ffffff; */
+    border: 1px solid white;
+    border-left: 6px solid white; 
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    color:white;
 }
