@@ -27,9 +27,10 @@ create_posts_table()
 create_feedback_table()
 # delete_user("mk122@wellesley.edu")
 
+# auth
 st.sidebar.header("Login")
 
-# welcome message b4 login
+# welcome message
 if "access_token" not in st.session_state:
     st.markdown("""
         <div style='
