@@ -115,31 +115,40 @@ def delete_post(post_id, img_path):
 # --- FILTERS ---
 st.markdown("### 📂 Filter Posts")
 
-# fetch and preprocess all posts
 posts = get_all_community_posts()
-all_dates = sorted({created_at.split(" ")[0] for (_, _, _, _, _, created_at) in posts})
 
+# Username substring filter
 filter_username = st.text_input(
     "Filter by username contains…",
     value="",
     help="Type any substring of the poster’s username",
 )
-filter_date = st.selectbox("Filter by date", ["All"] + all_dates)
 
-# apply filters
+# Date calendar filter
+use_date_filter = st.checkbox("Filter by date", value=False)
+if use_date_filter:
+    filter_date = st.date_input("Select date", value=date.today())
+else:
+    filter_date = None
+
+# Apply filters
 filtered = []
 for post_id, email, img_path, full_caption, rating, created_at in posts:
     username = email.split("@")[0]
-    date_only = created_at.split(" ")[0]
+    date_only = created_at.split(" ")[0]  # "YYYY-MM-DD"
 
     if filter_username and filter_username.lower() not in username.lower():
         continue
-    if filter_date != "All" and date_only != filter_date:
-        continue
+
+    if filter_date:
+        # compare calendar date to post date
+        if date_only != filter_date.strftime("%Y-%m-%d"):
+            continue
+
     filtered.append((post_id, email, img_path, full_caption, rating, created_at))
 
-# decide which list to display
-if (filter_username or filter_date != "All") and not filtered:
+# Decide list to display
+if (filter_username or filter_date) and not filtered:
     st.info("No posts match your filters.")
     display_posts = []
 elif filtered:
