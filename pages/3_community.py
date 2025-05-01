@@ -1,5 +1,8 @@
 # pages/3_community.py
 
+from auth_guard import require_login  
+require_login()                # ← Must be first Streamlit-related call
+
 import streamlit as st
 import uuid, os
 from datetime import datetime
@@ -11,14 +14,9 @@ from db.bubbledb import (
 )
 from nav import render_sidebar
 
-from auth_guard import require_login
-require_login()
-
-from auth_guard import require_login
-require_login()
-
-# --- giding  default sidebar nav header ---
-st.markdown("""
+# now it’s safe to do any st.markdown, st.title, etc.
+st.markdown(
+    """
     <style>
         ul[data-testid="stSidebarNavItems"] {
             display: none;
@@ -27,11 +25,6 @@ st.markdown("""
     """,
     unsafe_allow_html=True,
 )
-
-# --- loading custom CSS ---
-with open("style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
 st.title("📸 Community Feed")
 
 # --- authenication ---
