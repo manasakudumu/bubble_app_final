@@ -8,6 +8,9 @@ import pytz
 from db.bubbledb import get_journal_entries, add_journal_entry, get_user, submit_feedback
 from nav import render_sidebar
 
+from auth_guard import require_login
+require_login()
+
 st.markdown("""
     <style>
         ul[data-testid="stSidebarNavItems"] {

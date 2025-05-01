@@ -4,6 +4,9 @@ from datetime import datetime
 from db.bubbledb import add_community_post, get_all_community_posts, get_user, delete_community_post
 from nav import render_sidebar
 
+from auth_guard import require_login
+require_login()
+
 st.markdown("""
     <style>
         ul[data-testid="stSidebarNavItems"] {
