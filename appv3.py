@@ -27,14 +27,31 @@ create_posts_table()
 create_feedback_table()
 # delete_user("mk122@wellesley.edu")
 
-# auth
 st.sidebar.header("Login")
 
+# welcome message b4 login
 if "access_token" not in st.session_state:
+    st.markdown("""
+        <div style='
+            background-color: #fef6fb;
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #ffd6e7;
+            margin-top: 3rem;
+        '>
+            <h1 style='font-size: 3.2rem;'>🫧 Welcome to Bubble! 🫧</h1>
+            <p style='font-size: 1.3rem;'>
+                Please log in with your Wellesley Google account to begin journaling your meals
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
     st.sidebar.write("Please log in with your Google account:")
     if google_login():
         st.rerun()
     st.stop()
+
 
 render_user_profile()
 
