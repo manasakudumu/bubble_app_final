@@ -1,11 +1,11 @@
 # pages/3_community.py
 
 from auth_guard import require_login  
-require_login()                # ← Must be first Streamlit-related call
+require_login()                # ← Must be first Streamlit‐related call
 
 import streamlit as st
 import uuid, os
-from datetime import datetime
+from datetime import datetime, date      # ← added `date` here
 from db.bubbledb import (
     add_community_post,
     get_all_community_posts,
@@ -14,7 +14,7 @@ from db.bubbledb import (
 )
 from nav import render_sidebar
 
-# now it’s safe to do any st.markdown, st.title, etc.
+# --- Hide the default sidebar nav header ---
 st.markdown(
     """
     <style>
@@ -27,7 +27,7 @@ st.markdown(
 )
 st.title("📸 Community Feed")
 
-# --- authenication ---
+# --- authentication ---
 if "access_token" not in st.session_state:
     st.warning("Please log in before accessing this page.")
     st.stop()
@@ -43,8 +43,7 @@ if not user or user[2] != "Student":
 st.session_state["role"] = "Student"
 render_sidebar("Student")
 
-# -- new post form ---
-# reset form defaults if not yet in session_state
+# --- new post form ---
 if "post_star_rating" not in st.session_state:
     st.session_state.post_star_rating = 3
 if "post_title" not in st.session_state:
@@ -52,7 +51,6 @@ if "post_title" not in st.session_state:
 if "post_description" not in st.session_state:
     st.session_state.post_description = ""
 
-# Star rating selector
 st.markdown("### Rate this post")
 rating_cols = st.columns(5)
 for i in range(1, 6):
@@ -61,7 +59,6 @@ for i in range(1, 6):
         st.session_state.post_star_rating = i
 st.markdown(f"You rated this: **{st.session_state.post_star_rating} / 5**")
 
-# Post creation form
 with st.form("post_form"):
     img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
     title = st.text_input("Post Title", value=st.session_state.post_title)
@@ -93,7 +90,7 @@ if submitted:
     else:
         st.warning("Please include at least an image and a title.")
 
-# -- delete helper ---
+# --- delete helper ---
 def delete_post(post_id, img_path):
     # remove image file
     try:
@@ -141,7 +138,6 @@ for post_id, email, img_path, full_caption, rating, created_at in posts:
         continue
 
     if filter_date:
-        # compare calendar date to post date
         if date_only != filter_date.strftime("%Y-%m-%d"):
             continue
 
