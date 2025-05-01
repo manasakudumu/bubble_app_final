@@ -4,6 +4,9 @@ from nav import render_sidebar
 
 st.set_page_config(page_title="Staff Feedback Inbox", layout="wide")
 
+from auth_guard import require_login
+require_login()
+
 st.markdown("""
     <style>
         ul[data-testid="stSidebarNavItems"] {

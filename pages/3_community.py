@@ -11,9 +11,14 @@ from db.bubbledb import (
 )
 from nav import render_sidebar
 
+from auth_guard import require_login
+require_login()
+
+from auth_guard import require_login
+require_login()
+
 # --- giding  default sidebar nav header ---
-st.markdown(
-    """
+st.markdown("""
     <style>
         ul[data-testid="stSidebarNavItems"] {
             display: none;

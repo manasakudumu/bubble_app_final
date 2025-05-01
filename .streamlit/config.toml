@@ -4,8 +4,8 @@ headless = true
 
 [theme]
 base = "light"
-primaryColor = "#ffb6c1"         
-backgroundColor = "#fef8f8"      
-secondaryBackgroundColor = "#ffffff"
-textColor = "#222222"            
-font = "sans serif"
+primaryColor = "#ff69b4"                # Brighter bubblegum pink
+backgroundColor = "#fff0f5"             # Light pink lavender blush
+secondaryBackgroundColor = "#ffeaf7"    # Soft cherry blossom pink
+textColor = "#444444"                   # Gentle dark gray for readability
+font = "sans serif"     
