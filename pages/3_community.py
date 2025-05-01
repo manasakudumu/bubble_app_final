@@ -2,6 +2,15 @@ import streamlit as st
 import uuid, os
 from datetime import datetime
 from db.bubbledb import add_community_post, get_all_community_posts, get_user, delete_community_post
+from nav import render_sidebar
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -14,6 +23,10 @@ if "access_token" not in st.session_state:
 user_email = st.session_state.get("user_email")
 user = get_user(user_email)
 role = user[2]
+
+if "role" in st.session_state:
+    render_sidebar(st.session_state["role"])
+
 
 if role != "Student":
     st.error("Access denied: This page is only for students.")

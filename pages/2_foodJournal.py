@@ -5,6 +5,15 @@ import plotly.express as px
 import requests
 from datetime import datetime
 from db.bubbledb import get_journal_entries, add_journal_entry, get_user
+from nav import render_sidebar
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -58,6 +67,10 @@ user = get_user(user_email)
 if user[2] != "Student":
     st.error("Access denied: This page is only for students.")
     st.stop()
+
+if "role" in st.session_state:
+    render_sidebar(st.session_state["role"])
+
 
 tab1, tab2 = st.tabs(["📖 New Journal Entry", "📈 Past Journal Entries"])
 
@@ -160,7 +173,7 @@ with tab2:
         with col2:
             selected_filter_meal = st.selectbox("Meal", ["All"] + sorted(df_past["Meal"].unique()))
         with col3:
-            date_range = st.date_input("Date Range", [df_past["Date"].min(), df_past["Date"].max()])
+            selected_filter_date = st.date_input("Date", value=datetime.today())
         with col4:
             selected_filter_mood = st.selectbox("Mood", ["All"] + sorted(df_past["Mood"].unique()))
 
@@ -172,12 +185,11 @@ with tab2:
             filtered_df = filtered_df[filtered_df["Meal"] == selected_filter_meal]
         if selected_filter_mood != "All":
             filtered_df = filtered_df[filtered_df["Mood"] == selected_filter_mood]
-        if isinstance(date_range, list) and len(date_range) == 2:
-            start_date, end_date = date_range
+        if selected_filter_date:
             filtered_df = filtered_df[
-                (filtered_df["Date"] >= pd.to_datetime(start_date)) &
-                (filtered_df["Date"] <= pd.to_datetime(end_date))
+                filtered_df["Date"] == pd.to_datetime(selected_filter_date)
             ]
+
 
         # show filtered results
         if filtered_df.empty:

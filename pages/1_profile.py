@@ -1,5 +1,14 @@
 import streamlit as st
 from db.bubbledb import get_user, update_profile, add_user
+from nav import render_sidebar
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 #alter_users_table()
 def setupProfile():

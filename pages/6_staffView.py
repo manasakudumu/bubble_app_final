@@ -1,34 +1,51 @@
 import streamlit as st
 from db.bubbledb import get_all_feedback, get_user
+from nav import render_sidebar
+
+st.set_page_config(page_title="Staff Feedback Inbox", layout="wide")
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    
-# Page config
-st.title("Dining Staff Feedback Inbox")
-st.markdown("_View anonymous feedback from students about your dining hall._")
 
-# Auth check
+#auth
 if "access_token" not in st.session_state:
     st.warning("Please log in before accessing this page.")
     st.stop()
 
-user_email = st.session_state["user_email"]
+user_email = st.session_state.get("user_email")
 user = get_user(user_email)
-if user[2] == "Student":
+
+if not user:
+    st.error("User not found. Please return to home page and select a role.")
+    st.stop()
+
+if user[2] != "Staff":
     st.error("Access denied: This page is only for dining staff.")
     st.stop()
 
-# Ask for dining hall
+st.session_state["role"] = "Staff"
+render_sidebar("Staff")
+
+st.title("Dining Staff Feedback Inbox")
+st.markdown("_View anonymous feedback from students about your dining hall._")
+
 dining_halls = ['Bae', 'Bates', 'Stone', 'Tower']
 selected_hall = st.selectbox("Which dining hall are you managing?", dining_halls)
 
-# Fetch and filter feedback
 feedback = get_all_feedback()
 filtered_feedback = [
     (msg, timestamp) for msg, timestamp in feedback if selected_hall.lower() in msg.lower()
 ]
 
+#display
 if not filtered_feedback:
     st.info(f"No feedback received for {selected_hall} yet.")
 else:
@@ -52,6 +69,3 @@ else:
                 """,
                 unsafe_allow_html=True
             )
-
-
-

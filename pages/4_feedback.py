@@ -6,6 +6,15 @@ import requests
 from datetime import datetime
 import pytz
 from db.bubbledb import get_journal_entries, add_journal_entry, get_user, submit_feedback
+from nav import render_sidebar
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -61,6 +70,9 @@ user = get_user(user_email)
 if user[2] != "Student":
     st.error("Access denied: This page is only for students.")
     st.stop()
+
+if "role" in st.session_state:
+    render_sidebar(st.session_state["role"])
 
 #inputs
 # Select date, dining location, and meal

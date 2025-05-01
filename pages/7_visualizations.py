@@ -2,8 +2,17 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from db.bubbledb import get_journal_entries, get_user
+from nav import render_sidebar
 
 st.set_page_config(page_title="Insights", layout="wide")
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # Optional styling
 with open("style.css") as f:
@@ -19,6 +28,9 @@ if "access_token" not in st.session_state:
 user_email = st.session_state.get("user_email")
 user = get_user(user_email)
 role = user[2]
+
+if "role" in st.session_state:
+    render_sidebar(st.session_state["role"])
 
 if role != "Student":
     st.error("Access denied: This page is only for students.")

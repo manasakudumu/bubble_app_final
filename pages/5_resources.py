@@ -1,5 +1,14 @@
 import streamlit as st
 from db.bubbledb import get_user
+from nav import render_sidebar
+
+st.markdown("""
+    <style>
+        ul[data-testid="stSidebarNavItems"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 with open("style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -13,6 +22,10 @@ if "access_token" not in st.session_state:
 user_email = st.session_state.get("user_email")
 user = get_user(user_email)
 role = user[2]
+
+if "role" in st.session_state:
+    render_sidebar(st.session_state["role"])
+
 
 if role != "Student":
     st.error("Access denied: This page is only for students.")
