@@ -60,7 +60,7 @@ def google_login():
 
         st.sidebar.markdown(
             f"""
-            <a href="{auth_url}" target="_self">
+            <a href="{auth_url}" target="_blank" rel="noopener noreferrer">
                 <button style='padding:10px 20px;font-size:16px;background-color:#0b72b9;color:white;border:none;border-radius:5px;cursor:pointer;'>
                     Login with Google
                 </button>
