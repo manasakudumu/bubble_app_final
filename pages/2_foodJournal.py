@@ -43,9 +43,14 @@ def get_menu(date, locationId, mealId):
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
         items = response.json()
+
+        if not isinstance(items, list):
+                st.warning(f"Unexpected response format: {items}")
+                return []
+        
         filtered_items = []
         for item in items:
-            if isinstance(item, dict) and item.get('date', '').startswith(date):
+            if isinstance(item, dict) and isinstance(item.get('date', ''), str) and item.get('date', '').startswith(date):
                 food = {
                     'Name': item.get('name', 'N/A'),
                     'Description': item.get('description', 'N/A'),
@@ -56,6 +61,7 @@ def get_menu(date, locationId, mealId):
                     'Preferences': ", ".join([p['name'] for p in item.get('preferences', [])])
                 }
                 filtered_items.append(food)
+            
         return filtered_items
     return []
 
@@ -100,15 +106,18 @@ with tab1:
     if "prev_meal" not in st.session_state:
                     st.session_state.prev_meal = selected_meal
 
-    if (selected_location != st.session_state.prev_location or selected_meal != st.session_state.prev_meal):
-                    st.session_state.selected_foods = set()
-                    for food in food_names:
-                        key = f"toggle_{food}"
-                        if key in st.session_state:
-                            del st.session_state[key]
+    if (
+        selected_location != st.session_state.get("prev_location")
+        or selected_meal != st.session_state.get("prev_meal")
+    ):
+        st.session_state.selected_foods = set()
+        for key in list(st.session_state.keys()):
+            if key.startswith("toggle_"):
+                del st.session_state[key]
 
     st.session_state.prev_location = selected_location
     st.session_state.prev_meal = selected_meal
+
 
     # Checkbox interface
     st.markdown("### What did you eat? (click to select, click again to unselect)")
