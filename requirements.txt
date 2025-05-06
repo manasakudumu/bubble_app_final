@@ -3,3 +3,4 @@ authlib
 requests
 pandas
 plotly
+cloudinary
