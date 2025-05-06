@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 from auth import google_login
 from user_profile import render_user_profile
 from db.bubbledb import (
@@ -8,6 +9,11 @@ from db.bubbledb import (
 )
 
 st.set_page_config(page_title="Bubble", page_icon="🫧", layout="wide")
+
+# load QR image as base64
+with open("images/qrcode_docs.google.com.png", "rb") as f:
+    img_bytes = f.read()
+    b64_img = base64.b64encode(img_bytes).decode()
 
 # hide default nav
 st.markdown("""
@@ -158,3 +164,31 @@ elif role == "Staff":
     st.success("You're logged in as dining staff")
     if st.button("View Feedback Inbox"):
         st.switch_page("pages/6_staffView.py")
+
+st.markdown(f"""
+    <style>
+        .floating-qr {{
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background-color: #fff0f5;
+            padding: 12px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            z-index: 100;
+        }}
+        .floating-qr p {{
+            font-size: 0.9rem;
+            color: #d63384;
+            margin: 0 0 5px 0;
+        }}
+        .floating-qr img {{
+            width: 110px;
+        }}
+    </style>
+    <div class="floating-qr">
+        <p>If you liked using Bubble,<br>scan to give feedback!!</p>
+        <img src="data:image/png;base64,{b64_img}" alt="Feedback QR Code">
+    </div>
+""", unsafe_allow_html=True)

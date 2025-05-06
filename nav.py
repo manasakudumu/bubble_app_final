@@ -3,6 +3,10 @@ import streamlit as st
 def render_sidebar(role):
     st.sidebar.title("Navigation")
 
+    # show profile photo
+    if "image" in st.session_state and st.session_state["image"] is not None:
+        st.sidebar.image(st.session_state["image"], width=100, caption="You 🫧", use_column_width=False)
+
     if role == "Student":
         if st.sidebar.button(" My Profile"):
             st.switch_page("pages/1_profile.py")
@@ -22,7 +26,6 @@ def render_sidebar(role):
             st.switch_page("pages/1_profile.py")
         if st.sidebar.button(" Feedback Inbox"):
             st.switch_page("pages/6_staffView.py")
-        
 
     st.sidebar.divider()
     if st.sidebar.button(" Home"):

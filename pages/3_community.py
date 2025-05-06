@@ -80,6 +80,7 @@ if submitted:
 
         try:
             result = cloudinary.uploader.upload(img, public_id=f"bubble_app/{post_id}")
+            st.write("Upload result:", result)
             file_url = result["secure_url"]
 
             add_community_post(

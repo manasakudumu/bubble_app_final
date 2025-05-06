@@ -44,14 +44,9 @@ def get_menu(date, locationId, mealId):
     response = requests.get(base_url, params=params)
     if response.status_code == 200:
         items = response.json()
-
-        if not isinstance(items, list):
-                st.warning(f"Unexpected response format: {items}")
-                return []
-        
         filtered_items = []
         for item in items:
-            if isinstance(item, dict) and isinstance(item.get('date', ''), str) and item.get('date', '').startswith(date):
+            if item.get('date', '').startswith(date):
                 food = {
                     'Name': item.get('name', 'N/A'),
                     'Description': item.get('description', 'N/A'),
@@ -62,7 +57,6 @@ def get_menu(date, locationId, mealId):
                     'Preferences': ", ".join([p['name'] for p in item.get('preferences', [])])
                 }
                 filtered_items.append(food)
-            
         return filtered_items
     return []
 
