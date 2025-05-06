@@ -46,7 +46,7 @@ def get_menu(date, locationId, mealId):
         items = response.json()
         filtered_items = []
         for item in items:
-            if item.get('date', '').startswith(date):
+            if isinstance(item.get('date', ''), str) and item.get('date', '').startswith(date):
                 food = {
                     'Name': item.get('name', 'N/A'),
                     'Description': item.get('description', 'N/A'),

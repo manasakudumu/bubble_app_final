@@ -86,7 +86,7 @@ if submitted:
         st.session_state.post_title = ""
         st.session_state.post_description = ""
         st.session_state.post_star_rating = 3
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.warning("Please include at least an image and a title.")
 
@@ -107,7 +107,7 @@ def delete_post(post_id, img_path):
 
     # mark for UI removal
     st.session_state.deleted_post = post_id
-    st.experimental_rerun()
+    st.rerun()
 
 # --- FILTERS ---
 st.markdown("### 📂 Filter Posts")
