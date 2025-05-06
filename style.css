@@ -1,79 +1,74 @@
 body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    background-image: url('https://img.freepik.com/free-vector/french-cafe-background-women-rsquo-s-lifestyle-illustration-vector_53876-156596.jpg?semt=ais_hybrid&w=740');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: -1;
-    opacity: 0.45;
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-image: url('https://img.freepik.com/free-vector/french-cafe-background-women-rsquo-s-lifestyle-illustration-vector_53876-156596.jpg?semt=ais_hybrid&w=740');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+    opacity: 0.45;
 }
 
 .stApp {
-    background-color: rgba(255, 245, 250, 0.92);  
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background-color: rgba(255, 245, 250, 0.92);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 html, body {
-    font-family: 'Helvetica Neue', sans-serif;
-    color: #3b3054;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #3b3054;
 }
 
 h1, h2, h3, h4, h5, h6, p, .stMarkdown {
-    color: #3f2d4c;
+    color: #3f2d4c;
 }
 
-
 section[data-testid="stSidebar"] {
-    background-color: #eaf2ff !important; 
+    background-color: #eaf2ff !important; 
 }
 
 section[data-testid="stSidebar"] * {
-    color: #2f3e5c;
-    font-weight: bold;
-    font-family: 'Helvetica Neue', sans-serif;
+    color: #2f3e5c;
+    font-weight: bold;
+    font-family: 'Helvetica Neue', sans-serif;
 }
-
 
 a, button {
-    color: #cc4c8a !important;
+    color: #cc4c8a !important;
 }
-
 
 button {
-    background-color: #ffd6ec !important;      
-    color: #2f3e5c !important;
-    border: 2px solid #b3daff !important;     
-    border-radius: 999px !important;        
-    padding: 0.5rem 1.5rem !important;
-    font-weight: bold;
-    font-size: 1rem;
-    box-shadow: 1px 2px 6px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease-in-out;
+    background-color: #ffd6ec !important;
+    color: #2f3e5c !important;
+    border: 2px solid #b3daff !important;
+    border-radius: 999px !important;
+    padding: 0.5rem 1.5rem !important;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: 1px 2px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
 }
-
 
 button:hover {
-    background-color: #bae1ff !important;      
-    border-color: #ffb6d5 !important;        
-    color: #3b3054 !important;
-    transform: scale(1.03);
+    background-color: #bae1ff !important;
+    border-color: #ffb6d5 !important;
+    color: #3b3054 !important;
+    transform: scale(1.03);
 }
 
-
 .journal-card {
-    background: rgba(255, 255, 255, 0.94);
-    border: 1px solid #f3c4ff;
-    border-left: 6px solid #ff99cc;  
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 2px 2px 12px rgba(0,0,0,0.06);
-    color: #4a3f59;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid #f3c4ff;
+    border-left: 6px solid #ff99cc;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 2
 }
