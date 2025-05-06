@@ -1,4 +1,7 @@
 # pages/3_community.py
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 from auth_guard import require_login  
 require_login()                # ← Must be first Streamlit‐related call
@@ -13,6 +16,12 @@ from db.bubbledb import (
     delete_community_post,
 )
 from nav import render_sidebar
+
+cloudinary.config(
+    cloud_name=st.secrets["cloudinary"]["cloud_name"],
+    api_key=st.secrets["cloudinary"]["api_key"],
+    api_secret=st.secrets["cloudinary"]["api_secret"]
+)
 
 # --- Hide the default sidebar nav header ---
 st.markdown(
@@ -67,45 +76,40 @@ with st.form("post_form"):
 
 if submitted:
     if img and title:
-        os.makedirs("posts", exist_ok=True)
         post_id = str(uuid.uuid4())
-        file_path = f"posts/{post_id}.jpg"
-        with open(file_path, "wb") as f:
-            f.write(img.read())
 
-        add_community_post(
-            post_id,
-            user_email,
-            file_path,
-            f"{title}||{description}",
-            st.session_state.post_star_rating,
-            str(datetime.now()),
-        )
-        st.success("Post uploaded!")
-        # reset form state
-        st.session_state.post_title = ""
-        st.session_state.post_description = ""
-        st.session_state.post_star_rating = 3
-        st.rerun()
+        try:
+            result = cloudinary.uploader.upload(img, public_id=f"bubble_app/{post_id}")
+            file_url = result["secure_url"]
+
+            add_community_post(
+                post_id,
+                user_email,
+                file_url,
+                f"{title}||{description}",
+                st.session_state.post_star_rating,
+                str(datetime.now()),
+            )
+            st.success("Post uploaded!")
+
+            st.session_state.post_title = ""
+            st.session_state.post_description = ""
+            st.session_state.post_star_rating = 3
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"Image upload failed: {e}")
     else:
         st.warning("Please include at least an image and a title.")
 
+
 # --- delete helper ---
 def delete_post(post_id, img_path):
-    # remove image file
-    try:
-        if os.path.exists(img_path):
-            os.remove(img_path)
-    except Exception as e:
-        st.error(f"Error deleting image file: {e}")
-
-    # remove from DB
     try:
         delete_community_post(post_id)
     except Exception as e:
         st.error(f"Error deleting post from database: {e}")
 
-    # mark for UI removal
     st.session_state.deleted_post = post_id
     st.rerun()
 
@@ -161,10 +165,11 @@ for i, (post_id, email, img_path, full_caption, rating, created_at) in enumerate
     title, description = (full_caption.split("||") + [""])[:2]
 
     with cols[i % 3]:
-        if os.path.exists(img_path):
+        if img_path.startswith("http"):
             st.image(img_path, use_container_width=True)
         else:
-            st.warning("Image file not found.")
+            st.warning("Image URL is invalid or not found.")
+
 
         st.markdown(f"**{title.strip()}**")
         if description.strip():
